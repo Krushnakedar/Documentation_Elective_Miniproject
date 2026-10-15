@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CloudBox — Secure Storage. Faster Delivery.</title>
+  <meta name="description" content="An educational file-security lab showing how segmentation, AES-256-GCM, private S3, and CloudFront fit together.">
+  <meta name="theme-color" content="#07111f"><meta property="og:title" content="CloudBox — Secure Storage. Faster Delivery.">
+  <meta property="og:description" content="A practical security lab for encrypted file storage and content delivery.">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header"><div class="nav-wrap">
+    <a class="brand" href="./index.html" aria-label="CloudBox home"><span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7.1 18h10.1a4 4 0 0 0 .4-8A5.8 5.8 0 0 0 6.5 8.8 4.6 4.6 0 0 0 7.1 18Z" stroke="currentColor" stroke-width="1.8"/><path d="m9 12.5 3 3 3-3m-3 2.6V9.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>CloudBox <em>/ lab</em></a>
+    <nav class="nav-links" id="primary-navigation" data-nav-links aria-label="Main navigation">
+      <a class="nav-link" href="./index.html" aria-current="page" data-testid="link-home">Overview</a>
+      <a class="nav-link" href="./architecture.html" data-testid="link-architecture">Architecture</a>
+      <a class="nav-link" href="./documentation.html" data-testid="link-documentation">Documentation</a>
+      <a class="nav-link" href="./security.html" data-testid="link-security">Security lab</a>
+      <a class="nav-link" href="./testing.html" data-testid="link-testing">Testing</a>
+      <a class="nav-link" href="./team.html" data-testid="link-team">Project team</a>
+    </nav>
+    <div class="nav-tools"><button class="theme-toggle" type="button" data-theme-toggle data-testid="toggle-theme" aria-label="Switch theme"></button><button class="menu-toggle" type="button" data-menu-toggle aria-controls="primary-navigation" aria-expanded="false" aria-label="Open navigation menu" data-testid="toggle-menu"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
+  </div></header>
+  <main id="main">
+    <section class="hero"><div class="container hero-grid">
+      <div class="reveal"><span class="eyebrow">A file security learning lab</span><h1>Secure Storage.<br><span>Faster Delivery.</span></h1>
+        <p class="lead">CloudBox is a practical walkthrough of how browser-side file segmentation and AES-GCM can pair with private object storage and a global content-delivery edge.</p>
+        <div class="hero-actions"><a class="button button-primary" href="./architecture.html">Explore the architecture <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a><a class="button button-secondary" href="./security.html">Open security lab</a></div>
+        <div class="hero-note"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>An educational prototype for a third-year computer engineering project. No upload service or AWS account is silently assumed.</span></div>
+      </div>
+      <div class="hero-visual reveal reveal-delay" aria-label="Illustration of a file split into encrypted segments"><div class="visual-orbit"></div><div class="visual-core">
+        <div class="console-top"><span>CLOUDBOX / LOCAL WORKFLOW</span><span class="console-indicators"><i></i><i></i><i></i></span></div>
+        <div class="file-row"><span class="file-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3.8h8l4 4V20H6V3.8Z" stroke="currentColor" stroke-width="1.7"/><path d="M14 4v4h4M9 13h6m-6 3h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span><div><div class="file-name">research-notes.pdf</div><div class="file-sub">LOCAL FILE · 8.4 MiB</div></div><span class="pill">IN BROWSER</span></div>
+        <div class="segment-list" aria-label="Illustrative encrypted segments"><span class="segment"></span><span class="segment"></span><span class="segment"></span><span class="segment"></span><span class="segment"></span><span class="segment"></span><span class="segment"></span></div>
+        <div class="console-bottom"><span>SEGMENTS → AES-256-GCM</span><span>KEY STAYS SEPARATE</span></div>
+      </div><span class="hero-caption">MODEL VIEW · NOT LIVE DATA</span></div>
+    </div></section>
+    <section class="section"><div class="container">
+      <div class="section-heading"><div><span class="eyebrow">Deployment truth</span><h2>Clear about what runs here.</h2></div><p>This site teaches the design. Cloud resources and a complete upload API require separate setup and are not represented as live services.</p></div>
+      <div class="status-strip" data-testid="deployment-status">
+        <div class="status-item"><span class="status-label">LOCAL DEMO</span><p>Static pages and browser-side learning tools are served from this site.</p></div>
+        <div class="status-item"><span class="status-label">AWS DEPLOYMENT REQUIRED</span><p>Private S3, CloudFront, OAC, and DNS must be provisioned in an AWS account.</p></div>
+        <div class="status-item"><span class="status-label">CONFIGURATION REQUIRED</span><p>Set real distribution details and verify origin, HTTPS, and access policies before delivery tests.</p></div>
+      </div>
+    </div></section>
+    <section class="section"><div class="container">
+      <div class="section-heading"><div><span class="eyebrow">Project overview</span><h2>A cloud computing mini-project.</h2></div><p>Student project by Krushna Kedar · Academic year 2026.</p></div>
+      <div class="grid-2">
+        <article class="card"><h3>Project overview</h3><p>CloudBox demonstrates block-based file operations and explains how a static documentation site can be delivered from private Amazon S3 through CloudFront.</p><p class="inline-meta">CATEGORY · CLOUD COMPUTING MINI-PROJECT</p></article>
+        <article class="card"><h3>Objectives</h3><ul><li>Split real files into configurable blocks.</li><li>Encrypt and authenticate blocks with AES-256-GCM.</li><li>Download the encrypted package and a separate key.</li><li>Decrypt and reconstruct the original file.</li><li>Document private S3, CloudFront, OAC, and HTTPS setup.</li></ul></article>
+      </div>
+      <div class="section-heading" style="margin-top:48px"><div><span class="eyebrow">Technology stack</span><h2>Static by design.</h2></div><p>No database, backend, API keys, or paid integrations are needed for this local demo.</p></div>
+      <div class="grid-3">
+        <article class="card"><h3>Browser layer</h3><p>HTML5 · CSS3 · Vanilla JavaScript · Web Crypto API</p></article>
+        <article class="card"><h3>Cryptography</h3><p>AES-256-GCM · 12-byte random IVs · separate key file</p></article>
+        <article class="card"><h3>Cloud target</h3><p>Amazon S3 · CloudFront · Git · GitHub</p></article>
+      </div>
+    </div></section>
+    <section class="section section-alt"><div class="container">
+      <div class="section-heading"><div><span class="eyebrow">Architecture preview</span><h2>Private origin. Public edge.</h2></div><p>Intended design only—no AWS bucket or CloudFront distribution is provisioned by this project.</p></div>
+      <div class="diagram-panel"><div class="diagram-label">Website delivery path · intended</div><div class="diagram-flow" role="img" aria-label="Browser connects over HTTPS to CloudFront, which uses Origin Access Control to retrieve assets from a private S3 bucket"><div class="diagram-node"><strong>Browser</strong><span>visitor request</span></div><b class="diagram-arrow" aria-hidden="true">→</b><div class="diagram-node"><strong>HTTPS</strong><span>protected in transit</span></div><b class="diagram-arrow" aria-hidden="true">→</b><div class="diagram-node"><strong>CloudFront</strong><span>edge delivery</span></div><b class="diagram-arrow" aria-hidden="true">→</b><div class="diagram-node"><strong>OAC</strong><span>signed origin request</span></div><b class="diagram-arrow" aria-hidden="true">→</b><div class="diagram-node"><strong>Private S3</strong><span>static objects</span></div></div></div>
+      <div class="hero-actions"><a class="button button-secondary" href="./architecture.html">View full architecture</a><a class="button button-secondary" href="./documentation.html">Open technical documentation</a></div>
+    </div></section>
+    <section class="section section-alt"><div class="container">
+      <div class="section-heading"><div><span class="eyebrow">The system in one view</span><h2>Six capabilities. Two security boundaries.</h2></div><p>Browser cryptography protects file contents; origin controls govern delivery of the static site and stored objects.</p></div>
+      <div class="grid-3">
+        <article class="card"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 3h7l4 4v14H7V3Z" stroke="currentColor" stroke-width="1.7"/><path d="M14 3v5h5M10 13h5m-5 3h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div><h3>Secure File Processing</h3><p>Divide a real file into ordered, configurable blocks in the browser for the encryption workflow.</p></article>
+        <article class="card"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7a4 4 0 1 1 8 0v3m-4 4v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div><h3>Encrypted Block Storage</h3><p>AES-256-GCM authenticates each encrypted block. The key is saved separately from the package.</p></article>
+        <article class="card"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 18h16M6 15V9m4 6V5m4 10V7m4 8v-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div><h3>Cloud Object Storage</h3><p>Amazon S3 can store static site assets and encrypted packages behind a private bucket policy.</p></article>
+        <article class="card"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 12h17M12 3a14 14 0 0 1 0 18m0-18a14 14 0 0 0 0 18" stroke="currentColor" stroke-width="1.3"/></svg></div><h3>Global Content Delivery</h3><p>CloudFront can cache and distribute static content from edge locations closer to visitors.</p></article>
+        <article class="card"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7a4 4 0 1 1 8 0v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div><h3>HTTPS Protection</h3><p>TLS protects traffic in transit; a CloudFront viewer policy can redirect HTTP requests to HTTPS.</p></article>
+        <article class="card"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6M5 5v14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h3>File Reconstruction</h3><p>Authenticate and decrypt blocks in their saved order, then verify the original byte size.</p></article>
+      </div>
+    </div></section>
+    <section class="section"><div class="container">
+      <div class="section-heading"><div><span class="eyebrow">Workflow</span><h2>From source file to reconstructed output.</h2></div><p>Encryption and reconstruction happen at the client in the learning workflow. Delivery infrastructure is a separate deployment concern.</p></div>
+      <div class="workflow">
+        <div class="workflow-step"><span class="step-number">01</span><h3>Select</h3><p>Choose a local source file.</p></div>
+        <div class="workflow-step"><span class="step-number">02</span><h3>Segment</h3><p>Split into ordered blocks.</p></div>
+        <div class="workflow-step"><span class="step-number">03</span><h3>Encrypt</h3><p>Protect blocks with AES-GCM.</p></div>
+        <div class="workflow-step"><span class="step-number">04</span><h3>Package</h3><p>Keep metadata and key distinct.</p></div>
+        <div class="workflow-step"><span class="step-number">05</span><h3>Rebuild</h3><p>Authenticate, decrypt, join.</p></div>
+      </div>
+    </div></section>
+    <section class="section section-alt"><div class="container">
+      <div class="section-heading"><div><span class="eyebrow">Useful boundaries</span><h2>What this prototype does not claim.</h2></div></div>
+      <div class="grid-2">
+        <div class="callout"><strong>No authenticated upload API</strong><p>CloudBox does not provide identity, authorization, signed uploads, or a server-side upload endpoint. Encrypting a file locally does not create those services.</p></div>
+        <div class="callout"><strong>No deployment implied</strong><p>CloudFront and private S3 are an architecture target. This local site does not contain real AWS URLs, credentials, or a provisioned bucket.</p></div>
+      </div>
+      <div class="hero-actions"><a class="button button-secondary" href="./documentation.html">Read the project documentation</a><a class="button button-secondary" href="./testing.html">Review test scenarios</a></div>
+    </div></section>
+  </main>
+  <footer class="footer"><div class="container footer-inner"><div><div class="footer-brand">CloudBox <span class="muted">/ secure file lab</span></div><p>Educational prototype. Treat deployment assumptions and security limitations as part of the design, not fine print.</p></div><nav class="footer-links" aria-label="Footer navigation"><a href="./architecture.html">Architecture</a><a href="./documentation.html">Documentation</a><a href="./security.html">Security lab</a><a href="./team.html">Team</a><a href="./testing.html">Testing</a></nav><span class="inline-meta">© <span data-year></span> CloudBox · Academic year 2026</span></div></footer>
+  <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="false"></div>
+  <script type="module" src="./js/app.js"></script><script type="module" src="./js/diagrams.js"></script>
+</body></html>

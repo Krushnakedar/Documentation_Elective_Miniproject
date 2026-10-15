@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "CloudBox — Secure Storage"
+description = "A static cloud security learning portal with six documentation pages and a browser-based AES-256-GCM tool for securely packaging, downloading, and reconstructing files."
+version = "1.0.0"
+id = "artifacts/cloudbox"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18131
+
+[services.development]
+run = "pnpm --filter @workspace/cloudbox run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/cloudbox", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/cloudbox/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18131"
+BASE_PATH = "/"

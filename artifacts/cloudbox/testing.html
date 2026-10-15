@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Testing — CloudBox</title>
+    <meta name="description" content="Editable CloudBox test ledger with expected and observed results. AWS cases require a real deployment.">
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="./css/style.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="nav-wrap">
+        <a class="brand" href="./index.html" aria-label="CloudBox home">
+          <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7.1 18h10.1a4 4 0 0 0 .4-8A5.8 5.8 0 0 0 6.5 8.8 4.6 4.6 0 0 0 7.1 18Z" stroke="currentColor" stroke-width="1.8"/><path d="m9 12.5 3 3 3-3m-3 2.6V9.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          CloudBox <em>/ lab</em>
+        </a>
+        <nav class="nav-links" id="primary-navigation" data-nav-links aria-label="Main navigation">
+          <a class="nav-link" href="./index.html" data-testid="link-home">Overview</a>
+          <a class="nav-link" href="./architecture.html" data-testid="link-architecture">Architecture</a>
+          <a class="nav-link" href="./documentation.html" data-testid="link-documentation">Documentation</a>
+          <a class="nav-link" href="./security.html" data-testid="link-security">Security lab</a>
+          <a class="nav-link" href="./testing.html" aria-current="page" data-testid="link-testing">Testing</a>
+          <a class="nav-link" href="./team.html" data-testid="link-team">Project team</a>
+        </nav>
+        <div class="nav-tools">
+          <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch theme" data-testid="toggle-theme"></button>
+          <button class="menu-toggle" type="button" data-menu-toggle aria-controls="primary-navigation" aria-expanded="false" aria-label="Open navigation menu" data-testid="toggle-menu"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+        </div>
+      </div>
+    </header>
+    <main id="main">
+      <section class="page-hero">
+        <div class="container">
+          <div class="breadcrumb"><a href="./index.html">CloudBox</a> / Testing</div>
+          <span class="eyebrow">Evidence before confidence</span>
+          <h1>Test ledger</h1>
+          <p class="lead">Record the expected result beside what you actually observed. Every case begins NOT RUN; select a result only after performing the test.</p>
+        </div>
+      </section>
+      <section class="section">
+        <div class="container">
+          <div class="callout" role="note">
+            <strong>Edits are saved locally on this device.</strong>
+            <p>This ledger is not a test runner. A selected result is a manual record, not proof. Keep AWS cases NOT RUN or BLOCKED until real AWS resources are available and tested.</p>
+          </div>
+          <div class="section-heading" style="margin-top:36px">
+            <div><span class="eyebrow">Scenarios · 01—26</span><h2>Project test cases</h2></div>
+            <button class="button button-secondary" type="button" data-reset-tests data-testid="button-reset-tests">Reset checklist</button>
+          </div>
+          <div class="matrix-wrap" data-testid="test-ledger">
+            <table class="matrix test-matrix">
+              <thead>
+                <tr>
+                  <th scope="col">Test ID</th>
+                  <th scope="col">Scenario</th>
+                  <th scope="col">Expected Result</th>
+                  <th scope="col">Actual Result</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody id="testCaseRows"></tbody>
+            </table>
+          </div>
+          <noscript><p class="callout">Enable JavaScript to view and edit the local test ledger.</p></noscript>
+          <p class="inline-meta" style="margin-top:17px">A status and its observed result are stored in local browser storage only. Record reproducible evidence separately.</p>
+        </div>
+      </section>
+    </main>
+    <footer class="footer">
+      <div class="container footer-inner">
+        <div><div class="footer-brand">CloudBox <span class="muted">/ secure file lab</span></div><p>Only observed results belong in the ledger. AWS deployment is not implied by these scenarios.</p></div>
+        <nav class="footer-links" aria-label="Footer navigation">
+          <a href="./index.html">Overview</a><a href="./architecture.html">Architecture</a><a href="./documentation.html">Documentation</a><a href="./security.html">Security lab</a><a href="./team.html">Team</a>
+        </nav>
+        <span class="inline-meta">© <span data-year></span> CloudBox</span>
+      </div>
+    </footer>
+    <div class="toast-region" data-toast-region aria-live="polite"></div>
+    <script type="module" src="./js/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,649 @@
+# REPLIT AGENT PROMPT — CLOUDBOX
+## Build a Complete Secure Cloud Storage & Content Delivery Documentation Website
+
+You are an expert full-stack engineer, UI/UX designer, cybersecurity engineer, cloud architect, and technical documentation writer.
+
+Your task is to **build a complete, working, premium-quality website called CloudBox — Secure Cloud Storage and Content Delivery** inside this Replit workspace.
+
+Do not merely explain how to build it. Create the application files, implement the features, run the application, test it, and fix errors wherever possible.
+
+Do not stop after creating the homepage. Complete every page, the file encryption functionality, technical documentation, and testing interface.
+
+---
+
+## 1. Project overview
+
+**Project name:** CloudBox — Secure Cloud Storage and Content Delivery
+
+**Student:** Krushna Kedar
+
+**Academic year:** 2026
+
+**Project category:** Cloud Computing Mini-Project
+
+### Problem statement
+
+Implement basic cloud file operations, including dividing files into segments or blocks and downloading files from cloud storage in encrypted form. Host a documentation or portfolio website using Amazon S3 and integrate Amazon CloudFront to demonstrate content distribution and HTTPS.
+
+### Main goals
+
+1. Create a professional, multi-page documentation website.
+2. Split real files into configurable blocks.
+3. Encrypt every block using AES-256-GCM.
+4. Download an encrypted package and a separate encryption key.
+5. Download encrypted packages locally or from a user-provided CloudFront URL.
+6. Decrypt and reconstruct the original file.
+7. Explain the system architecture and security workflow.
+8. Document Amazon S3 and CloudFront deployment.
+9. Include meaningful testing records and an academic project report.
+10. Keep the website deployable as static files without requiring a backend.
+
+## 2. Technology requirements
+
+Use:
+
+- HTML5
+- CSS3
+- Vanilla JavaScript
+- Browser Web Crypto API
+- AES-256-GCM authenticated encryption
+- Amazon S3
+- Amazon CloudFront
+- Git and GitHub
+
+Prefer a lightweight static application without a database or server.
+
+Replit may use its built-in preview or a simple static development server. Do not add unnecessary frameworks, dependencies, API keys, databases, or paid integrations.
+
+**Important:** Replit is the development and preview environment. Amazon S3 and CloudFront are the intended deployment environment. Do not claim the website is deployed to AWS until that deployment has actually happened.
+
+## 3. Premium visual design
+
+Build a polished cloud-security product website with the visual quality of a modern SaaS landing page and developer documentation portal.
+
+### Design system
+
+- Dark navy background by default.
+- Electric blue and cyan accents.
+- Clear white and muted text.
+- Premium typography with suitable fallback fonts.
+- Subtle gradients, fine borders, restrained glass effects, and soft shadows.
+- Consistent spacing and alignment.
+- Professional diagrams and file-processing visualizations.
+- Minimal, purposeful animation.
+- Responsive mobile and tablet layouts.
+- Excellent contrast and accessibility.
+- Clear buttons, inputs, progress bars, status indicators, and notifications.
+
+Avoid a generic template look, excessive rounded cards, oversized text throughout the page, and decorative elements that reduce readability.
+
+Create a custom CloudBox logo using inline SVG or CSS.
+
+Add a functional light/dark theme toggle and persist the theme preference locally.
+
+Add responsive navigation, a working mobile menu, active-page navigation, keyboard focus states, and reduced-motion support.
+
+The final result should look like a real cloud technology product, not a basic student HTML assignment.
+
+## 4. Required project structure
+
+Create and maintain this structure:
+
+```text
+CloudBox/
+├── index.html
+├── architecture.html
+├── documentation.html
+├── security.html
+├── team.html
+├── testing.html
+├── css/
+│   └── style.css
+├── js/
+│   ├── app.js
+│   ├── security.js
+│   └── diagrams.js
+├── assets/
+│   └── favicon.svg
+├── docs/
+│   ├── PROJECT_REPORT.md
+│   ├── TEST_CASES.md
+│   └── AWS_DEPLOYMENT.md
+├── README.md
+└── .gitignore
+```
+
+You may improve the organization when necessary, but all referenced files must exist and contain meaningful content.
+
+Because this project should also work on Amazon S3, keep all frontend assets and internal links compatible with static hosting. Use relative paths instead of root-absolute asset paths.
+
+Do not introduce a build step unless genuinely required.
+
+## 5. Page 1 — Homepage
+
+File: `index.html`
+
+Create a premium landing page with the following content.
+
+### Header
+
+- CloudBox brand logo.
+- Home
+- Architecture
+- Documentation
+- File Security
+- Team
+- Testing
+- Theme toggle.
+
+### Hero section
+
+Main heading:
+
+**Secure Storage. Faster Delivery.**
+
+Supporting text:
+
+"Explore secure file segmentation, AES-256-GCM encryption, cloud object storage, and global content delivery through Amazon CloudFront."
+
+Buttons:
+
+- Explore File Security
+- Explore Architecture
+
+Include a custom visual showing a file transforming into encrypted blocks and moving through cloud storage and a content delivery network.
+
+### Feature sections
+
+Create attractive sections for:
+
+1. Secure File Processing
+2. Encrypted Block Storage
+3. Cloud Object Storage
+4. Global Content Delivery
+5. HTTPS Protection
+6. File Reconstruction
+
+### Additional sections
+
+- Project overview.
+- Objectives.
+- Technology stack.
+- System workflow.
+- Architecture preview.
+- Implementation status.
+- Limitations and security notice.
+- Footer with navigation and academic year.
+
+Use these status labels where appropriate:
+
+- LOCAL DEMO
+- AWS DEPLOYMENT REQUIRED
+- CONFIGURATION REQUIRED
+
+Never display fake cloud metrics or claim an AWS deployment has been completed.
+
+Use this GitHub placeholder until a real repository URL is supplied:
+
+`https://github.com/your-username/your-repository`
+
+## 6. Page 2 — Architecture
+
+File: `architecture.html`
+
+Explain two different but related workflows.
+
+### A. Website delivery architecture
+
+Browser → HTTPS → CloudFront CDN → Origin Access Control → Private S3 bucket → Website assets.
+
+Explain:
+
+- Amazon S3 object storage.
+- CloudFront content distribution and caching.
+- HTTPS.
+- HTTP-to-HTTPS redirects.
+- Origin Access Control.
+- Private bucket access.
+- Cache invalidation after updates.
+
+### B. File security architecture
+
+Original file → Segmentation → AES-256-GCM encryption → Encrypted package → S3 object → CloudFront HTTPS download → Decryption with separate key → Original file reconstruction.
+
+Create attractive diagrams using inline SVG, HTML, or CSS. Do not rely on an external diagram service.
+
+Every diagram must have readable labels and a responsive layout.
+
+Distinguish the intended architecture from components that have actually been deployed.
+
+Explain that the static website delivery path does not automatically provide an authenticated file upload API.
+
+## 7. Page 3 — Technical documentation
+
+File: `documentation.html`
+
+Build a comprehensive documentation portal with a sidebar or table of contents, anchor links, code examples, and functional copy-to-clipboard buttons.
+
+Include these sections:
+
+1. Abstract
+2. Introduction
+3. Problem statement
+4. Objectives
+5. Scope
+6. Technology stack
+7. Hardware and software requirements
+8. Project directory structure
+9. Local development setup
+10. File segmentation algorithm
+11. AES-256-GCM encryption
+12. Encrypted package format
+13. Decryption and reconstruction
+14. Amazon S3 configuration
+15. CloudFront configuration
+16. Origin Access Control
+17. HTTPS verification
+18. Encrypted file upload
+19. Encrypted file download
+20. Troubleshooting
+21. Security considerations
+22. Limitations
+23. Future enhancements
+24. Conclusion
+25. Official references
+
+Explain concepts in simple language suitable for a third-year computer engineering student.
+
+Include correct example commands for running the website in Replit and, if appropriate, on Windows PowerShell.
+
+All copy buttons must actually copy their associated text and show feedback.
+
+Do not invent AWS resource identifiers, successful deployment results, or real URLs.
+
+## 8. Page 4 — File Security module
+
+File: `security.html`
+
+This is the core functional requirement. Build a genuine file-processing tool, not a mockup.
+
+Create a professional interface with two main sections.
+
+### A. Encrypt a file
+
+Provide:
+
+- File picker.
+- Selected filename.
+- File size.
+- MIME type.
+- Configurable block size.
+- Default block size: 1 MiB.
+- Maximum input file size: 100 MiB.
+- Estimated block count.
+- Split & Encrypt button.
+- Progress bar.
+- Current processing status.
+- Number of encrypted blocks.
+- Download Encrypted Package button.
+- Download Key File button.
+
+### B. Decrypt and reconstruct
+
+Provide:
+
+- Encrypted package file picker.
+- Separate key file picker.
+- Optional HTTPS CloudFront URL input.
+- Download Package button.
+- Decrypt & Reconstruct button.
+- Progress and status indicators.
+- Validation errors.
+- Reconstructed filename and size.
+- Download Reconstructed File button.
+
+Manual package selection must remain available if cloud downloading fails.
+
+### Encryption requirements
+
+Implement actual cryptography with the browser's Web Crypto API.
+
+1. Generate a fresh AES-GCM 256-bit key using `crypto.subtle.generateKey()`.
+2. Use `crypto.getRandomValues()` to generate a unique 12-byte IV for every encrypted block.
+3. Split the input file into independently encrypted blocks.
+4. Encrypt every block with AES-GCM authenticated encryption.
+5. Encode IVs and ciphertext safely using Base64.
+6. Preserve block order using explicit indexes.
+7. Store original filename, file size, block size, block count, format version, algorithm, IV, and ciphertext in the package.
+8. Export the raw encryption key into a separate downloadable key file.
+9. Keep the key out of the encrypted package.
+10. Import the separate key during decryption.
+11. Decrypt blocks in their correct order.
+12. Reconstruct the original file using a Blob.
+13. Verify the reconstructed file size.
+14. Handle empty files.
+15. Reject malformed package structures and invalid metadata.
+16. Reject invalid key lengths and malformed Base64 values.
+17. Reject duplicate or missing block indexes.
+18. Reject inconsistent block counts and sizes.
+19. Detect authentication failures caused by incorrect keys or modified ciphertext.
+20. Sanitize downloaded filenames.
+21. Release temporary object URLs safely.
+22. Disable conflicting controls while processing.
+23. Show accessible progress and error messages.
+
+Use a versioned JSON package format with:
+
+- `format`
+- `version`
+- `algorithm`
+- `originalName`
+- `originalSize`
+- `blockSize`
+- `blockCount`
+- `chunks`
+
+Each chunk should include an index, IV, and encrypted data.
+
+Do not use inefficient spread operations on large arrays.
+
+Validate the file size before reading its contents. Enforce sensible bounds on block size, package size, chunk count, and metadata.
+
+The default maximum file size is 100 MiB. Document the memory limitations of browser-based processing.
+
+Never log the encryption key, plaintext data, or sensitive content.
+
+### Key security
+
+Show a prominent warning:
+
+"The encryption key is downloaded separately. Anyone with both the encrypted package and its key can decrypt the file. Keep the key private and never upload it to a public website or commit it to Git."
+
+Explain that this is an educational prototype and not a production-grade key management system.
+
+### Cloud download
+
+Allow the user to enter the actual HTTPS CloudFront URL for an encrypted object.
+
+The application must:
+
+- Validate the URL format.
+- Require HTTPS for remote downloads.
+- Fetch the exact URL supplied by the user.
+- Check `response.ok`.
+- Handle HTTP 403 and 404 errors.
+- Handle network failures.
+- Explain CORS restrictions.
+- Allow the downloaded package to be passed directly into the decryption workflow.
+
+Do not hardcode a fictional CloudFront domain.
+
+Do not display a successful cloud connection indicator unless a real request succeeds.
+
+If the package is uploaded manually through the AWS Console, document that limitation honestly.
+
+Do not fake an S3 upload feature. Automatic uploads are out of scope unless a secure, genuinely implemented upload mechanism is added.
+
+### Browser compatibility
+
+Check for Web Crypto API availability and provide a clear error if it is unavailable.
+
+Explain that secure contexts are required for cryptographic operations in supported browsers. Localhost and HTTPS hosting are appropriate environments.
+
+## 9. Page 5 — Team
+
+File: `team.html`
+
+Create a polished four-member team page.
+
+Roles:
+
+- Member 1: File segmentation, encryption, and decryption.
+- Member 2: Documentation website and responsive interface.
+- Member 3: Amazon S3, CloudFront, OAC, and HTTPS deployment.
+- Member 4: Testing, report writing, screenshots, and presentation.
+
+Display Krushna Kedar as project owner or coordinator only where appropriate.
+
+Use editable name placeholders for the other members.
+
+Use CSS-generated initials avatars rather than fabricated photographs.
+
+Add a contribution matrix with responsibilities and deliverables.
+
+Do not invent other members' names, emails, or personal achievements.
+
+## 10. Page 6 — Testing
+
+File: `testing.html`
+
+Build a test case dashboard with a professional table:
+
+Test ID | Scenario | Expected Result | Actual Result | Status
+
+Support these statuses:
+
+- NOT RUN
+- PASS
+- FAIL
+- BLOCKED
+
+Cover:
+
+- Homepage loading.
+- Navigation.
+- Responsive design.
+- Theme toggle.
+- File selection.
+- Empty files.
+- Files smaller than 1 MiB.
+- Files larger than 1 MiB.
+- Multiple-block files.
+- File size limit.
+- Encryption.
+- Package download.
+- Key download.
+- Successful decryption.
+- Incorrect key.
+- Tampered ciphertext.
+- Invalid metadata.
+- Missing blocks.
+- Duplicate block indexes.
+- File reconstruction.
+- CloudFront HTTPS access.
+- HTTP-to-HTTPS redirect.
+- Private S3 bucket access.
+- Cloud object download.
+- CORS failures.
+- Cloud download errors.
+
+All tests must begin with NOT RUN unless they have actually been executed and verified.
+
+AWS tests must remain NOT RUN or BLOCKED until actual AWS resources are available and tested.
+
+Allow the project owner to update test results manually and reset a checklist for the final demonstration.
+
+Do not claim that a test has passed merely because a corresponding UI element exists.
+
+## 11. Shared functionality
+
+Implement reusable JavaScript for:
+
+- Responsive mobile navigation.
+- Active navigation state.
+- Theme switching.
+- Theme preference persistence.
+- Copy-to-clipboard buttons.
+- Toast notifications.
+- Accessible status announcements.
+- Scroll progress, if useful.
+- Back-to-top control.
+- Footer year.
+- Documentation table-of-contents navigation.
+- Safe URL and filename handling.
+
+Keep JavaScript organized and avoid duplicate event listeners.
+
+All internal links must work across all six HTML pages.
+
+## 12. Supporting project files
+
+### README.md
+
+Include:
+
+- Project overview.
+- Feature list.
+- Technology stack.
+- Project structure.
+- Replit run instructions.
+- Local Windows run instructions.
+- Encryption and decryption demonstration.
+- AWS deployment overview.
+- Security warnings.
+- Limitations.
+
+### docs/PROJECT_REPORT.md
+
+Create a proper college mini-project report containing:
+
+- Project title.
+- Student details.
+- Abstract.
+- Introduction.
+- Problem statement.
+- Objectives.
+- Technologies.
+- Architecture.
+- Algorithms.
+- Implementation.
+- Testing methodology.
+- Results with editable fields for actual observations.
+- Limitations.
+- Future scope.
+- Conclusion.
+- Official references.
+
+Do not invent actual experimental results.
+
+### docs/TEST_CASES.md
+
+Document every test, its expected result, actual result field, and status.
+
+### docs/AWS_DEPLOYMENT.md
+
+Write a beginner-friendly guide covering:
+
+- Creating a private S3 bucket.
+- Uploading website files.
+- Creating a CloudFront distribution.
+- Configuring Origin Access Control.
+- Applying the correct S3 bucket policy.
+- Setting `index.html` as the default root object.
+- Redirecting HTTP to HTTPS.
+- Verifying the deployed website.
+- Uploading an encrypted package.
+- Downloading the package through CloudFront.
+- Configuring CORS when JavaScript cross-origin downloads require it.
+- Troubleshooting 403 and 404 responses.
+- Creating cache invalidations.
+- Monitoring costs and deleting unused resources.
+
+Reference official AWS documentation.
+
+### .gitignore
+
+Include suitable entries for local editor files, logs, temporary artifacts, and secret files.
+
+Never include real credentials or encryption keys.
+
+## 13. Accessibility and quality requirements
+
+Use:
+
+- Semantic HTML.
+- Responsive CSS.
+- Accessible labels.
+- Keyboard navigation.
+- Clear focus indicators.
+- Appropriate contrast.
+- ARIA live regions for status changes.
+- Correct page titles and meta descriptions.
+- Reduced-motion support.
+- Defensive validation.
+- Clear error handling.
+
+Do not use fake data, fake cloud metrics, fake AWS status, fake test results, nonfunctional buttons, or broken placeholder interactions.
+
+Do not use external services unless necessary.
+
+Keep the interface visually consistent across all pages.
+
+## 14. Replit execution and implementation workflow
+
+Follow these steps in order:
+
+1. Inspect the existing workspace and preserve useful files.
+2. Create the directory structure.
+3. Implement the shared visual design and navigation.
+4. Build all six pages.
+5. Implement the encryption and decryption engine.
+6. Connect the user interface to the real encryption logic.
+7. Create architecture diagrams and documentation.
+8. Create the academic report, test cases, and deployment guide.
+9. Configure the Replit run command or preview so the website opens correctly.
+10. Test all internal navigation links.
+11. Test file encryption and decryption with small files, empty files, files over 1 MiB, and files requiring multiple blocks.
+12. Test wrong keys and modified ciphertext.
+13. Fix errors found during testing.
+14. Verify mobile responsiveness.
+15. Verify that the application does not require a database or backend.
+16. Confirm that all required project files exist.
+17. Provide accurate run instructions and report any tests that could not be executed.
+
+If the project already exists, inspect it before modifying it.
+
+Do not stop to ask me to approve each page. Use reasonable design decisions and complete the project.
+
+If Replit imposes execution limits, prioritize the working security module and all six functional pages over decorative animations.
+
+## 15. Final acceptance checklist
+
+The project is complete when:
+
+- All six HTML pages are present.
+- Navigation works.
+- Responsive styling works.
+- Light/dark theme works.
+- Diagrams render correctly.
+- Documentation is complete.
+- Copy buttons work.
+- File segmentation produces the expected number of blocks.
+- AES-256-GCM encryption works.
+- A separate key file is generated.
+- The correct key reconstructs the original file.
+- Incorrect keys and tampered ciphertext are rejected.
+- Empty files are handled.
+- File sizes and block metadata are validated.
+- CloudFront downloads handle errors and CORS clearly.
+- AWS deployment status is represented honestly.
+- Test results are accurate.
+- Supporting Markdown files are complete.
+- The site can run without a backend.
+- No critical console errors remain.
+
+## 16. Final response after implementation
+
+When finished, tell me:
+
+1. What you implemented.
+2. The final project structure.
+3. How to run the website in Replit.
+4. How to test encryption and reconstruction.
+5. Which tests were actually executed and their results.
+6. Any remaining bugs or limitations.
+7. How to deploy to Amazon S3 and CloudFront.
+8. What AWS configuration I must complete manually.
+9. How to demonstrate the project to my college faculty.
+
+**Begin implementing the complete application in the current Replit workspace now. Build the actual working website, not just a plan or a homepage mockup.**

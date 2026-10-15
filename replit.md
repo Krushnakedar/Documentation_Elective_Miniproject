@@ -1,44 +1,53 @@
-# [Project name]
+# CloudBox
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Static cloud-security learning portal and browser-based AES-256-GCM file encryption demo. AWS S3 and CloudFront are documented deployment targets, not assumed to be configured.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- `pnpm --filter @workspace/cloudbox run dev` — run the CloudBox static site in Replit
+- `pnpm --filter @workspace/cloudbox run build` — create the static deployment files in `artifacts/cloudbox/dist/`
+- `pnpm --filter @workspace/cloudbox run test` — run static-site and crypto tests
+- `pnpm --filter @workspace/cloudbox run test:security` — run browser-independent crypto tests with Node's built-in test runner
+- `pnpm --filter @workspace/cloudbox run typecheck` — typecheck the artifact scaffold
+- CloudBox itself does not require a database, API, or environment secrets.
 
 ## Stack
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- pnpm workspaces and Vite build tooling
+- CloudBox runtime: static HTML, CSS, and vanilla JavaScript
+- File encryption: browser Web Crypto API with AES-256-GCM
+- Intended hosting: private Amazon S3 origin behind CloudFront OAC and HTTPS
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/cloudbox/` — all six site pages, shared styles/scripts, security module, docs, and tests
+- `artifacts/cloudbox/js/security.js` — package format and browser crypto workflow
+- `artifacts/cloudbox/docs/` — academic report, test record, and AWS deployment guide
+- `artifacts/cloudbox/tests/security.test.mjs` — Node-based crypto regression checks
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Keep the delivered site static and browser-only; the unrelated API/database template is not a CloudBox dependency.
+- The separate raw encryption key is not included in the encrypted package.
+- Treat AWS deployment and test results as unverified until the owner has actually deployed and tested AWS resources.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Six-page cloud security documentation portal.
+- Local file segmentation, AES-256-GCM encryption, package/key downloads, and authenticated reconstruction.
+- Optional HTTPS remote package download with explicit CORS/error handling; no upload API.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Do not invent AWS resource IDs, deployment claims, cloud metrics, test results, or team-member identities.
+- Keep the student/team content editable and preserve Krushna Kedar as project owner/coordinator.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Use HTTPS or localhost for Web Crypto.
+- Browser processing has memory overhead; input limit is 100 MiB and the key must remain private.
+- Do not upload the separate key file or commit it to Git.
+- AWS tests remain NOT RUN or BLOCKED until real resources are available and tested.
 
 ## Pointers
 
