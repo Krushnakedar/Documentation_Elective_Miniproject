@@ -1,53 +1,551 @@
 <!doctype html>
 <html lang="en" data-theme="dark">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Testing — CloudBox</title>
-    <meta name="description" content="Editable CloudBox test ledger with expected and observed results. AWS cases require a real deployment.">
-    <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./css/style.css">
+    <meta
+      name="description"
+      content="Editable CloudBox test ledger with expected and observed results. AWS cases require a real deployment."
+    />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <style>
+      /* ============================================================
+         Testing page — UI polish & motion (additive only).
+         Every rule is scoped to .testing-page so other pages keep
+         their existing look. Colours derive from currentColor and
+         theme accent tokens, so light and dark themes both work.
+         ============================================================ */
+      .testing-page {
+        --ts-acc: var(--accent, #6ea8fe);
+        --ts-acc-2: var(--accent-2, #a78bfa);
+        --ts-line: color-mix(in srgb, currentColor 14%, transparent);
+        --ts-glow: color-mix(in srgb, var(--ts-acc) 42%, transparent);
+        --ts-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+
+      /* ------------------------------------------------------------
+         1. HERO — ambient grid, drifting glow, staggered entrance
+         ------------------------------------------------------------ */
+      .testing-page .page-hero {
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+      }
+      .testing-page .page-hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(var(--ts-line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--ts-line) 1px, transparent 1px);
+        background-size: 56px 56px;
+        opacity: 0.26;
+        -webkit-mask-image: radial-gradient(
+          ellipse 78% 66% at 50% 0%,
+          #000 0%,
+          transparent 72%
+        );
+        mask-image: radial-gradient(
+          ellipse 78% 66% at 50% 0%,
+          #000 0%,
+          transparent 72%
+        );
+        animation: ts-grid 30s linear infinite;
+      }
+      .testing-page .page-hero::after {
+        content: "";
+        position: absolute;
+        inset: -30% -10%;
+        z-index: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(
+            circle at 16% 24%,
+            color-mix(in srgb, var(--ts-acc) 34%, transparent),
+            transparent 42%
+          ),
+          radial-gradient(
+            circle at 84% 8%,
+            color-mix(in srgb, var(--ts-acc-2) 30%, transparent),
+            transparent 44%
+          );
+        filter: blur(72px);
+        opacity: 0.55;
+        animation: ts-drift 20s ease-in-out infinite alternate;
+      }
+      .testing-page .page-hero .container {
+        position: relative;
+        z-index: 1;
+      }
+
+      .testing-page .page-hero .breadcrumb,
+      .testing-page .page-hero .eyebrow,
+      .testing-page .page-hero h1,
+      .testing-page .page-hero .lead {
+        animation: ts-fade-up 0.85s var(--ts-ease) both;
+      }
+      .testing-page .page-hero .breadcrumb {
+        animation-delay: 0.05s;
+      }
+      .testing-page .page-hero .eyebrow {
+        animation-delay: 0.16s;
+      }
+      .testing-page .page-hero h1 {
+        animation-delay: 0.26s;
+      }
+      .testing-page .page-hero .lead {
+        animation-delay: 0.38s;
+      }
+
+      /* Gradient headline with slow shimmer */
+      .testing-page .page-hero h1 {
+        background: linear-gradient(
+          100deg,
+          currentColor 0%,
+          currentColor 40%,
+          var(--ts-acc) 60%,
+          var(--ts-acc-2) 80%,
+          currentColor 100%
+        );
+        background-size: 240% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation:
+          ts-fade-up 0.85s var(--ts-ease) 0.26s both,
+          ts-shimmer 9s ease-in-out 1.1s infinite;
+      }
+      @supports not (
+        (-webkit-background-clip: text) or (background-clip: text)
+      ) {
+        .testing-page .page-hero h1 {
+          background: none;
+          -webkit-text-fill-color: currentColor;
+        }
+      }
+
+      /* Live indicator dot inside eyebrows */
+      .testing-page .page-hero .eyebrow,
+      .testing-page .section-heading .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+      }
+      .testing-page .page-hero .eyebrow::before,
+      .testing-page .section-heading .eyebrow::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        flex: none;
+        border-radius: 50%;
+        background: var(--ts-acc);
+        box-shadow: 0 0 0 0 var(--ts-glow);
+        animation: ts-ping 2.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+      }
+
+      /* ------------------------------------------------------------
+         2. SECTION HEADINGS — animated gradient rule
+         ------------------------------------------------------------ */
+      .testing-page .section-heading h2 {
+        position: relative;
+        padding-bottom: 0.5rem;
+      }
+      .testing-page .section-heading h2::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 54px;
+        height: 3px;
+        border-radius: 99px;
+        background: linear-gradient(90deg, var(--ts-acc), var(--ts-acc-2));
+        transform-origin: left center;
+        animation: ts-rule 1s var(--ts-ease) both;
+      }
+
+      /* ------------------------------------------------------------
+         3. CALLOUT — travelling bar + sheen
+         ------------------------------------------------------------ */
+      .testing-page .callout {
+        position: relative;
+        overflow: hidden;
+        transition:
+          transform 0.4s var(--ts-ease),
+          box-shadow 0.4s var(--ts-ease);
+      }
+      .testing-page .callout:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 20px 44px -30px
+          color-mix(in srgb, currentColor 70%, transparent);
+      }
+      .testing-page .callout::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: linear-gradient(
+          180deg,
+          var(--ts-acc),
+          var(--ts-acc-2),
+          var(--ts-acc)
+        );
+        background-size: 100% 220%;
+        animation: ts-slide 6s linear infinite;
+      }
+      .testing-page .callout::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(
+          100deg,
+          transparent 32%,
+          color-mix(in srgb, var(--ts-acc) 11%, transparent) 50%,
+          transparent 68%
+        );
+        transform: translateX(-110%);
+        animation: ts-sheen 8.5s ease-in-out infinite;
+      }
+
+      /* ------------------------------------------------------------
+         4. RESET BUTTON — lift + accent glow + shimmer
+         ------------------------------------------------------------ */
+      .testing-page [data-reset-tests] {
+        position: relative;
+        overflow: hidden;
+        transition:
+          transform 0.3s var(--ts-ease),
+          box-shadow 0.3s var(--ts-ease),
+          border-color 0.3s var(--ts-ease),
+          color 0.3s var(--ts-ease);
+      }
+      .testing-page [data-reset-tests]:hover {
+        transform: translateY(-2px);
+        border-color: color-mix(in srgb, var(--ts-acc) 50%, var(--ts-line));
+        box-shadow: 0 12px 26px -16px var(--ts-glow);
+        color: var(--ts-acc);
+      }
+      .testing-page [data-reset-tests]::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(
+          100deg,
+          transparent 25%,
+          rgba(255, 255, 255, 0.22) 50%,
+          transparent 75%
+        );
+        transform: translateX(-130%);
+        transition: transform 0.7s var(--ts-ease);
+      }
+      .testing-page [data-reset-tests]:hover::after {
+        transform: translateX(130%);
+      }
+
+      /* ------------------------------------------------------------
+         5. TEST MATRIX — hover feedback for JS-injected rows
+         ------------------------------------------------------------ */
+      .testing-page .matrix-wrap {
+        transition: box-shadow 0.5s var(--ts-ease);
+      }
+      .testing-page .test-matrix tbody tr {
+        transition: background-color 0.3s var(--ts-ease);
+      }
+      .testing-page .test-matrix tbody tr:hover {
+        background: color-mix(in srgb, var(--ts-acc) 7%, transparent);
+      }
+      .testing-page .test-matrix tbody tr td:first-child {
+        transition:
+          color 0.3s var(--ts-ease),
+          padding-left 0.3s var(--ts-ease);
+        font-variant-numeric: tabular-nums;
+      }
+      .testing-page .test-matrix tbody tr:hover td:first-child {
+        color: var(--ts-acc);
+        padding-left: 4px;
+      }
+      /* Soft accent edge on the first cell of hovered rows */
+      .testing-page .test-matrix tbody tr td:first-child {
+        position: relative;
+      }
+      .testing-page .test-matrix tbody tr td:first-child::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 15%;
+        bottom: 15%;
+        width: 2px;
+        border-radius: 2px;
+        background: var(--ts-acc);
+        opacity: 0;
+        transition: opacity 0.3s var(--ts-ease);
+      }
+      .testing-page .test-matrix tbody tr:hover td:first-child::before {
+        opacity: 0.85;
+      }
+
+      /* ------------------------------------------------------------
+         6. FOCUS VISIBILITY
+         ------------------------------------------------------------ */
+      .testing-page a:focus-visible,
+      .testing-page button:focus-visible,
+      .testing-page [data-reset-tests]:focus-visible {
+        outline: 2px solid var(--ts-acc);
+        outline-offset: 3px;
+        border-radius: 6px;
+      }
+
+      /* ------------------------------------------------------------
+         7. SCROLL REVEAL (classes added by JS only)
+         ------------------------------------------------------------ */
+      .testing-page .ts-reveal {
+        opacity: 0;
+        translate: 0 18px;
+        transition:
+          opacity 0.75s var(--ts-ease),
+          translate 0.75s var(--ts-ease);
+        transition-delay: var(--ts-delay, 0ms);
+      }
+      .testing-page .ts-reveal.is-visible {
+        opacity: 1;
+        translate: 0 0;
+      }
+
+      /* ------------------------------------------------------------
+         8. KEYFRAMES
+         ------------------------------------------------------------ */
+      @keyframes ts-fade-up {
+        from {
+          opacity: 0;
+          transform: translateY(14px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @keyframes ts-shimmer {
+        0%,
+        100% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+      }
+      @keyframes ts-grid {
+        to {
+          background-position:
+            56px 56px,
+            56px 56px;
+        }
+      }
+      @keyframes ts-drift {
+        from {
+          transform: translate3d(0, 0, 0) scale(1);
+        }
+        to {
+          transform: translate3d(26px, -20px, 0) scale(1.12);
+        }
+      }
+      @keyframes ts-ping {
+        0% {
+          box-shadow: 0 0 0 0 var(--ts-glow);
+        }
+        70% {
+          box-shadow: 0 0 0 9px transparent;
+        }
+        100% {
+          box-shadow: 0 0 0 0 transparent;
+        }
+      }
+      @keyframes ts-rule {
+        from {
+          transform: scaleX(0);
+        }
+        to {
+          transform: scaleX(1);
+        }
+      }
+      @keyframes ts-slide {
+        to {
+          background-position: 0 -220%;
+        }
+      }
+      @keyframes ts-sheen {
+        0%,
+        55% {
+          transform: translateX(-110%);
+        }
+        100% {
+          transform: translateX(110%);
+        }
+      }
+
+      /* ------------------------------------------------------------
+         9. REDUCED MOTION
+         ------------------------------------------------------------ */
+      @media (prefers-reduced-motion: reduce) {
+        .testing-page .page-hero::before,
+        .testing-page .page-hero::after,
+        .testing-page .page-hero .breadcrumb,
+        .testing-page .page-hero .eyebrow,
+        .testing-page .page-hero h1,
+        .testing-page .page-hero .lead,
+        .testing-page .page-hero .eyebrow::before,
+        .testing-page .section-heading .eyebrow::before,
+        .testing-page .section-heading h2::after,
+        .testing-page .callout::before,
+        .testing-page .callout::after {
+          animation: none !important;
+        }
+        .testing-page .ts-reveal {
+          opacity: 1;
+          translate: 0 0;
+          transition: none;
+        }
+        .testing-page .callout,
+        .testing-page .matrix-wrap,
+        .testing-page .test-matrix tbody tr,
+        .testing-page .test-matrix tbody tr td:first-child,
+        .testing-page .test-matrix tbody tr td:first-child::before,
+        .testing-page [data-reset-tests],
+        .testing-page [data-reset-tests]::after {
+          transition: none;
+        }
+      }
+    </style>
   </head>
-  <body>
+  <body class="testing-page">
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="site-header">
       <div class="nav-wrap">
         <a class="brand" href="./index.html" aria-label="CloudBox home">
-          <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7.1 18h10.1a4 4 0 0 0 .4-8A5.8 5.8 0 0 0 6.5 8.8 4.6 4.6 0 0 0 7.1 18Z" stroke="currentColor" stroke-width="1.8"/><path d="m9 12.5 3 3 3-3m-3 2.6V9.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="brand-mark" aria-hidden="true"
+            ><svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M7.1 18h10.1a4 4 0 0 0 .4-8A5.8 5.8 0 0 0 6.5 8.8 4.6 4.6 0 0 0 7.1 18Z"
+                stroke="currentColor"
+                stroke-width="1.8"
+              />
+              <path
+                d="m9 12.5 3 3 3-3m-3 2.6V9.7"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              /></svg
+          ></span>
           CloudBox <em>/ lab</em>
         </a>
-        <nav class="nav-links" id="primary-navigation" data-nav-links aria-label="Main navigation">
-          <a class="nav-link" href="./index.html" data-testid="link-home">Overview</a>
-          <a class="nav-link" href="./architecture.html" data-testid="link-architecture">Architecture</a>
-          <a class="nav-link" href="./documentation.html" data-testid="link-documentation">Documentation</a>
-          <a class="nav-link" href="./security.html" data-testid="link-security">Security lab</a>
-          <a class="nav-link" href="./testing.html" aria-current="page" data-testid="link-testing">Testing</a>
-          <a class="nav-link" href="./team.html" data-testid="link-team">Project team</a>
+        <nav
+          class="nav-links"
+          id="primary-navigation"
+          data-nav-links
+          aria-label="Main navigation"
+        >
+          <a class="nav-link" href="./index.html" data-testid="link-home"
+            >Overview</a
+          >
+          <a
+            class="nav-link"
+            href="./architecture.html"
+            data-testid="link-architecture"
+            >Architecture</a
+          >
+          <a
+            class="nav-link"
+            href="./documentation.html"
+            data-testid="link-documentation"
+            >Documentation</a
+          >
+          <a class="nav-link" href="./security.html" data-testid="link-security"
+            >Security lab</a
+          >
+          <a
+            class="nav-link"
+            href="./testing.html"
+            aria-current="page"
+            data-testid="link-testing"
+            >Testing</a
+          >
+          <a class="nav-link" href="./team.html" data-testid="link-team"
+            >Project team</a
+          >
         </nav>
         <div class="nav-tools">
-          <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch theme" data-testid="toggle-theme"></button>
-          <button class="menu-toggle" type="button" data-menu-toggle aria-controls="primary-navigation" aria-expanded="false" aria-label="Open navigation menu" data-testid="toggle-menu"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+          <button
+            class="theme-toggle"
+            type="button"
+            data-theme-toggle
+            aria-label="Switch theme"
+            data-testid="toggle-theme"
+          ></button>
+          <button
+            class="menu-toggle"
+            type="button"
+            data-menu-toggle
+            aria-controls="primary-navigation"
+            aria-expanded="false"
+            aria-label="Open navigation menu"
+            data-testid="toggle-menu"
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M4 7h16M4 12h16M4 17h16"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
         </div>
       </div>
     </header>
     <main id="main">
       <section class="page-hero">
         <div class="container">
-          <div class="breadcrumb"><a href="./index.html">CloudBox</a> / Testing</div>
+          <div class="breadcrumb">
+            <a href="./index.html">CloudBox</a> / Testing
+          </div>
           <span class="eyebrow">Evidence before confidence</span>
           <h1>Test ledger</h1>
-          <p class="lead">Record the expected result beside what you actually observed. Every case begins NOT RUN; select a result only after performing the test.</p>
+          <p class="lead">
+            Record the expected result beside what you actually observed. Every
+            case begins NOT RUN; select a result only after performing the test.
+          </p>
         </div>
       </section>
       <section class="section">
         <div class="container">
           <div class="callout" role="note">
             <strong>Edits are saved locally on this device.</strong>
-            <p>This ledger is not a test runner. A selected result is a manual record, not proof. Keep AWS cases NOT RUN or BLOCKED until real AWS resources are available and tested.</p>
+            <p>
+              This ledger is not a test runner. A selected result is a manual
+              record, not proof. Keep AWS cases NOT RUN or BLOCKED until real
+              AWS resources are available and tested.
+            </p>
           </div>
-          <div class="section-heading" style="margin-top:36px">
-            <div><span class="eyebrow">Scenarios · 01—26</span><h2>Project test cases</h2></div>
-            <button class="button button-secondary" type="button" data-reset-tests data-testid="button-reset-tests">Reset checklist</button>
+          <div class="section-heading" style="margin-top: 36px">
+            <div>
+              <span class="eyebrow">Scenarios · 01—26</span>
+              <h2>Project test cases</h2>
+            </div>
+            <button
+              class="button button-secondary"
+              type="button"
+              data-reset-tests
+              data-testid="button-reset-tests"
+            >
+              Reset checklist
+            </button>
           </div>
           <div class="matrix-wrap" data-testid="test-ledger">
             <table class="matrix test-matrix">
@@ -63,21 +561,100 @@
               <tbody id="testCaseRows"></tbody>
             </table>
           </div>
-          <noscript><p class="callout">Enable JavaScript to view and edit the local test ledger.</p></noscript>
-          <p class="inline-meta" style="margin-top:17px">A status and its observed result are stored in local browser storage only. Record reproducible evidence separately.</p>
+          <noscript
+            ><p class="callout">
+              Enable JavaScript to view and edit the local test ledger.
+            </p></noscript
+          >
+          <p class="inline-meta" style="margin-top: 17px">
+            A status and its observed result are stored in local browser storage
+            only. Record reproducible evidence separately.
+          </p>
         </div>
       </section>
     </main>
     <footer class="footer">
       <div class="container footer-inner">
-        <div><div class="footer-brand">CloudBox <span class="muted">/ secure file lab</span></div><p>Only observed results belong in the ledger. AWS deployment is not implied by these scenarios.</p></div>
+        <div>
+          <div class="footer-brand">
+            CloudBox <span class="muted">/ secure file lab</span>
+          </div>
+          <p>
+            Only observed results belong in the ledger. AWS deployment is not
+            implied by these scenarios.
+          </p>
+        </div>
         <nav class="footer-links" aria-label="Footer navigation">
-          <a href="./index.html">Overview</a><a href="./architecture.html">Architecture</a><a href="./documentation.html">Documentation</a><a href="./security.html">Security lab</a><a href="./team.html">Team</a>
+          <a href="./index.html">Overview</a
+          ><a href="./architecture.html">Architecture</a
+          ><a href="./documentation.html">Documentation</a
+          ><a href="./security.html">Security lab</a
+          ><a href="./team.html">Team</a>
         </nav>
         <span class="inline-meta">© <span data-year></span> CloudBox</span>
       </div>
     </footer>
     <div class="toast-region" data-toast-region aria-live="polite"></div>
     <script type="module" src="./js/app.js"></script>
+    <script>
+      /* Additive scroll reveal. Page is fully readable without this script.
+         The table body is populated by app.js, so we only reveal stable
+         containers (callout, heading, table wrapper). */
+      (function () {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+          return;
+        if (!("IntersectionObserver" in window)) return;
+
+        var targets = [];
+        document
+          .querySelectorAll(
+            ".testing-page .callout, .testing-page .section-heading, .testing-page .matrix-wrap",
+          )
+          .forEach(function (el, i) {
+            el.classList.add("ts-reveal");
+            el.style.setProperty("--ts-delay", Math.min(i * 90, 360) + "ms");
+            targets.push(el);
+          });
+
+        if (!targets.length) return;
+
+        function settle(el) {
+          el.classList.remove("ts-reveal", "is-visible");
+          el.style.removeProperty("--ts-delay");
+        }
+
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (!entry.isIntersecting) return;
+              var el = entry.target;
+              el.classList.add("is-visible");
+              observer.unobserve(el);
+
+              var done = function (event) {
+                if (event.target !== el) return;
+                if (
+                  event.propertyName !== "translate" &&
+                  event.propertyName !== "opacity"
+                ) {
+                  return;
+                }
+                el.removeEventListener("transitionend", done);
+                settle(el);
+              };
+              el.addEventListener("transitionend", done);
+              setTimeout(function () {
+                settle(el);
+              }, 1800);
+            });
+          },
+          { threshold: 0.14, rootMargin: "0px 0px -40px 0px" },
+        );
+
+        targets.forEach(function (el) {
+          observer.observe(el);
+        });
+      })();
+    </script>
   </body>
 </html>

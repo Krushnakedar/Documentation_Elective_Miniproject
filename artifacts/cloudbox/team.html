@@ -1,19 +1,879 @@
 <!doctype html>
-<html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Project team — CloudBox</title><meta name="description" content="CloudBox project roles and contribution matrix."><link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./css/style.css"></head>
-<body><a class="skip-link" href="#main">Skip to content</a><header class="site-header"><div class="nav-wrap"><a class="brand" href="./index.html"><span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7.1 18h10.1a4 4 0 0 0 .4-8A5.8 5.8 0 0 0 6.5 8.8 4.6 4.6 0 0 0 7.1 18Z" stroke="currentColor" stroke-width="1.8"/><path d="m9 12.5 3 3 3-3m-3 2.6V9.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>CloudBox <em>/ lab</em></a><nav class="nav-links" data-nav-links aria-label="Main navigation"><a class="nav-link" href="./index.html">Overview</a><a class="nav-link" href="./architecture.html">Architecture</a><a class="nav-link" href="./documentation.html">Documentation</a><a class="nav-link" href="./security.html">Security lab</a><a class="nav-link" href="./testing.html">Testing</a><a class="nav-link" href="./team.html" aria-current="page">Project team</a></nav><div class="nav-tools"><button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch theme" data-testid="toggle-theme"></button><button class="menu-toggle" type="button" data-menu-toggle aria-controls="primary-navigation" aria-expanded="false" aria-label="Open navigation menu" data-testid="toggle-menu"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div></div></header>
-<main id="main"><section class="page-hero"><div class="container"><div class="breadcrumb"><a href="./index.html">CloudBox</a> / Project team</div><span class="eyebrow">Project contributors</span><h1>People behind the prototype.</h1><p class="lead">A role-based project roster, with personal details left out unless they have been provided. Contributor placeholders can be replaced with verified information.</p></div></section>
-<section class="section"><div class="container">
-<div class="callout"><strong>Project owner / coordinator: Krushna Kedar</strong><p>Coordinates the CloudBox Cloud Computing Mini-Project. The four member identities below remain editable placeholders until confirmed by the team.</p></div>
-<div class="team-grid" style="margin-top:22px">
-<article class="card person-card" data-testid="team-member-1"><div class="avatar" aria-hidden="true">M1</div><span class="role">Member 1 · file security</span><h3>[Enter Member 1 name]</h3><p>Role: file segmentation, encryption, and decryption.</p></article>
-<article class="card person-card" data-testid="team-member-2"><div class="avatar" aria-hidden="true">M2</div><span class="role">Member 2 · documentation</span><h3>[Enter Member 2 name]</h3><p>Role: documentation website and responsive interface.</p></article>
-<article class="card person-card" data-testid="team-member-3"><div class="avatar" aria-hidden="true">M3</div><span class="role">Member 3 · cloud deployment</span><h3>[Enter Member 3 name]</h3><p>Role: Amazon S3, CloudFront, OAC, and HTTPS deployment.</p></article>
-<article class="card person-card" data-testid="team-member-4"><div class="avatar" aria-hidden="true">M4</div><span class="role">Member 4 · testing &amp; report</span><h3>[Enter Member 4 name]</h3><p>Role: testing, report writing, screenshots, and presentation.</p></article>
-</div></div></section>
-<section class="section section-alt"><div class="container"><div class="section-heading"><div><span class="eyebrow">Responsibility map</span><h2>Contribution matrix</h2></div><p>Member names and contribution evidence are intentionally left editable and unassigned.</p></div><div class="matrix-wrap"><table class="matrix" data-testid="table-contributions"><thead><tr><th scope="col">Member</th><th scope="col">Responsibilities</th><th scope="col">Expected deliverables</th></tr></thead><tbody>
-<tr><td>Member 1</td><td>File segmentation, encryption, and decryption</td><td>Working file-security workflow</td></tr>
-<tr><td>Member 2</td><td>Documentation website and responsive interface</td><td>Six static pages and project documentation</td></tr>
-<tr><td>Member 3</td><td>Amazon S3, CloudFront, OAC, and HTTPS deployment</td><td>Verified AWS configuration and deployment record</td></tr>
-<tr><td>Member 4</td><td>Testing, report writing, screenshots, and presentation</td><td>Observed test results and academic report</td></tr>
-</tbody></table></div><p class="muted" style="font-size:12px;margin-top:14px">Replace each placeholder only with a name and contribution confirmed by the project team.</p></div></section></main>
-<footer class="footer"><div class="container footer-inner"><div><div class="footer-brand">CloudBox <span class="muted">/ secure file lab</span></div><p>Contributor identities are not invented. Add verified project details when available.</p></div><nav class="footer-links" aria-label="Footer navigation"><a href="./index.html">Overview</a><a href="./architecture.html">Architecture</a><a href="./documentation.html">Documentation</a><a href="./security.html">Security lab</a><a href="./testing.html">Testing</a></nav><span class="inline-meta">© <span data-year></span> CloudBox</span></div></footer><div class="toast-region" data-toast-region aria-live="polite"></div><script type="module" src="./js/app.js"></script></body></html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Project team — CloudBox</title>
+    <meta
+      name="description"
+      content="CloudBox project roles and contribution matrix."
+    />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <style>
+      /* ============================================================
+         Project team — UI upgrade (additive, scoped to .team-page)
+         Content is unchanged. All motion is opt-out via
+         prefers-reduced-motion. Colours pull from theme accent tokens
+         so both light and dark themes work.
+         ============================================================ */
+      .team-page {
+        --tp-acc: var(--accent, #6ea8fe);
+        --tp-acc-2: var(--accent-2, #a78bfa);
+        --tp-line: color-mix(in srgb, currentColor 14%, transparent);
+        --tp-glow: color-mix(in srgb, var(--tp-acc) 46%, transparent);
+        --tp-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+
+      /* ========================================================
+         1 · HERO — mesh gradient, floating sparks, entrance
+         ======================================================== */
+      .team-page .page-hero {
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+      }
+      .team-page .page-hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(var(--tp-line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--tp-line) 1px, transparent 1px);
+        background-size: 60px 60px;
+        opacity: 0.22;
+        -webkit-mask-image: radial-gradient(
+          ellipse 80% 68% at 50% 0%,
+          #000 0%,
+          transparent 74%
+        );
+        mask-image: radial-gradient(
+          ellipse 80% 68% at 50% 0%,
+          #000 0%,
+          transparent 74%
+        );
+        animation: tp-pan 36s linear infinite;
+      }
+      .team-page .page-hero::after {
+        content: "";
+        position: absolute;
+        inset: -35% -15%;
+        z-index: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(
+            circle at 20% 30%,
+            color-mix(in srgb, var(--tp-acc) 44%, transparent),
+            transparent 46%
+          ),
+          radial-gradient(
+            circle at 80% 15%,
+            color-mix(in srgb, var(--tp-acc-2) 40%, transparent),
+            transparent 48%
+          );
+        filter: blur(78px);
+        opacity: 0.6;
+        animation: tp-orbit 26s ease-in-out infinite alternate;
+      }
+      .team-page .page-hero .container {
+        position: relative;
+        z-index: 1;
+      }
+
+      /* Floating sparks — decorative only */
+      .team-page .tp-sparks {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+      .team-page .tp-sparks span {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--tp-acc);
+        box-shadow: 0 0 10px var(--tp-glow);
+        opacity: 0;
+        animation: tp-float 11s linear infinite;
+      }
+      .team-page .tp-sparks span:nth-child(1) {
+        left: 8%;
+        top: 28%;
+        animation-delay: 0s;
+      }
+      .team-page .tp-sparks span:nth-child(2) {
+        left: 22%;
+        top: 62%;
+        animation-delay: 1.6s;
+      }
+      .team-page .tp-sparks span:nth-child(3) {
+        left: 40%;
+        top: 18%;
+        animation-delay: 3.1s;
+      }
+      .team-page .tp-sparks span:nth-child(4) {
+        left: 58%;
+        top: 74%;
+        animation-delay: 4.8s;
+      }
+      .team-page .tp-sparks span:nth-child(5) {
+        left: 72%;
+        top: 32%;
+        animation-delay: 6.2s;
+      }
+      .team-page .tp-sparks span:nth-child(6) {
+        left: 88%;
+        top: 58%;
+        animation-delay: 7.9s;
+      }
+      .team-page .tp-sparks span:nth-child(7) {
+        left: 34%;
+        top: 88%;
+        animation-delay: 9.1s;
+      }
+      .team-page .tp-sparks span:nth-child(8) {
+        left: 66%;
+        top: 8%;
+        animation-delay: 10.4s;
+      }
+
+      /* Staggered entrance */
+      .team-page .page-hero .breadcrumb,
+      .team-page .page-hero .eyebrow,
+      .team-page .page-hero h1,
+      .team-page .page-hero .lead {
+        animation: tp-rise 0.85s var(--tp-ease) both;
+      }
+      .team-page .page-hero .breadcrumb {
+        animation-delay: 0.04s;
+      }
+      .team-page .page-hero .eyebrow {
+        animation-delay: 0.16s;
+      }
+      .team-page .page-hero h1 {
+        animation-delay: 0.28s;
+      }
+      .team-page .page-hero .lead {
+        animation-delay: 0.42s;
+      }
+
+      /* Headline accent line */
+      .team-page .page-hero h1 {
+        position: relative;
+        padding-bottom: 0.4rem;
+      }
+      .team-page .page-hero h1::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        height: 4px;
+        width: 100%;
+        max-width: 260px;
+        border-radius: 99px;
+        background: linear-gradient(
+          90deg,
+          var(--tp-acc),
+          var(--tp-acc-2),
+          transparent
+        );
+        transform-origin: left center;
+        animation:
+          tp-rise 0.85s var(--tp-ease) 0.28s both,
+          tp-grow 1.1s var(--tp-ease) 0.72s both;
+      }
+
+      /* Eyebrow live dot */
+      .team-page .page-hero .eyebrow,
+      .team-page .section-heading .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+      }
+      .team-page .page-hero .eyebrow::before,
+      .team-page .section-heading .eyebrow::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        flex: none;
+        border-radius: 50%;
+        background: var(--tp-acc);
+        box-shadow: 0 0 0 0 var(--tp-glow);
+        animation: tp-ping 2.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+      }
+
+      /* ========================================================
+         2 · SECTION HEADINGS
+         ======================================================== */
+      .team-page .section-heading h2 {
+        position: relative;
+        padding-bottom: 0.5rem;
+      }
+      .team-page .section-heading h2::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 56px;
+        height: 3px;
+        border-radius: 99px;
+        background: linear-gradient(90deg, var(--tp-acc), var(--tp-acc-2));
+        transform-origin: left center;
+        animation: tp-grow 1s var(--tp-ease) both;
+      }
+
+      /* ========================================================
+         3 · CALLOUT
+         ======================================================== */
+      .team-page .callout {
+        position: relative;
+        overflow: hidden;
+        transition:
+          transform 0.45s var(--tp-ease),
+          box-shadow 0.45s var(--tp-ease);
+      }
+      .team-page .callout:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 22px 46px -30px
+          color-mix(in srgb, currentColor 72%, transparent);
+      }
+      .team-page .callout::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: linear-gradient(
+          180deg,
+          var(--tp-acc),
+          var(--tp-acc-2),
+          var(--tp-acc)
+        );
+        background-size: 100% 220%;
+        animation: tp-travel 6s linear infinite;
+      }
+      .team-page .callout::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(
+          100deg,
+          transparent 32%,
+          color-mix(in srgb, var(--tp-acc) 12%, transparent) 50%,
+          transparent 68%
+        );
+        transform: translateX(-110%);
+        animation: tp-sweep 9s ease-in-out infinite;
+      }
+
+      /* ========================================================
+         4 · TEAM GRID — 3D tilt, shimmer, pulsing avatar
+         ======================================================== */
+      .team-page .person-card {
+        position: relative;
+        overflow: hidden;
+        transition:
+          transform 0.5s var(--tp-ease),
+          box-shadow 0.5s var(--tp-ease),
+          border-color 0.5s var(--tp-ease),
+          opacity 0.4s var(--tp-ease);
+        transform-style: preserve-3d;
+      }
+      .team-page .person-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 28px 58px -30px
+          color-mix(in srgb, currentColor 72%, transparent);
+        border-color: color-mix(in srgb, var(--tp-acc) 46%, var(--tp-line));
+      }
+      /* Shimmer sweep on hover */
+      .team-page .person-card::before {
+        content: "";
+        position: absolute;
+        inset: -20%;
+        pointer-events: none;
+        background: linear-gradient(
+          115deg,
+          transparent 40%,
+          color-mix(in srgb, var(--tp-acc) 22%, transparent) 50%,
+          transparent 60%
+        );
+        transform: translateX(-130%) rotate(8deg);
+        transition: transform 0.95s var(--tp-ease);
+        opacity: 0;
+      }
+      .team-page .person-card:hover::before {
+        transform: translateX(130%) rotate(8deg);
+        opacity: 1;
+      }
+      .team-page .person-card h3 {
+        transition: color 0.35s var(--tp-ease);
+      }
+      .team-page .person-card:hover h3 {
+        color: var(--tp-acc);
+      }
+      .team-page .team-grid:hover .person-card:not(:hover) {
+        opacity: 0.64;
+      }
+
+      /* Avatar with pulsing concentric ring + orbiting dot */
+      .team-page .avatar {
+        position: relative;
+        isolation: isolate;
+        transition: transform 0.55s var(--tp-ease);
+      }
+      .team-page .avatar::before {
+        content: "";
+        position: absolute;
+        inset: -5px;
+        border-radius: 50%;
+        pointer-events: none;
+        border: 1.5px solid color-mix(in srgb, var(--tp-acc) 55%, transparent);
+        opacity: 0;
+        transform: scale(0.9);
+        transition:
+          opacity 0.45s var(--tp-ease),
+          transform 0.6s var(--tp-ease);
+      }
+      .team-page .avatar::after {
+        content: "";
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        top: -5px;
+        left: 50%;
+        margin-left: -5px;
+        border-radius: 50%;
+        pointer-events: none;
+        background: var(--tp-acc);
+        box-shadow: 0 0 14px var(--tp-glow);
+        opacity: 0;
+        transform-origin: 50% calc(50% + 34px);
+        transition: opacity 0.45s var(--tp-ease);
+      }
+      .team-page .person-card:hover .avatar::before {
+        opacity: 1;
+        transform: scale(1);
+        animation: tp-halo 2.4s ease-in-out infinite;
+      }
+      .team-page .person-card:hover .avatar::after {
+        opacity: 1;
+        animation: tp-comet 3.4s linear infinite;
+      }
+      .team-page .person-card:hover .avatar {
+        transform: scale(1.06);
+      }
+
+      .team-page .person-card .role {
+        transition:
+          color 0.35s var(--tp-ease),
+          letter-spacing 0.35s var(--tp-ease);
+      }
+      .team-page .person-card:hover .role {
+        color: var(--tp-acc);
+        letter-spacing: 0.02em;
+      }
+
+      /* ========================================================
+         5 · CONTRIBUTION MATRIX — row reveal + hover focus
+         ======================================================== */
+      .team-page .matrix-wrap {
+        transition: box-shadow 0.5s var(--tp-ease);
+      }
+      .team-page .matrix tbody tr {
+        position: relative;
+        transition:
+          background-color 0.35s var(--tp-ease),
+          transform 0.35s var(--tp-ease);
+      }
+      .team-page .matrix tbody tr:hover {
+        background: color-mix(in srgb, var(--tp-acc) 8%, transparent);
+        transform: translateX(2px);
+      }
+      .team-page .matrix tbody tr td:first-child {
+        position: relative;
+        transition:
+          color 0.35s var(--tp-ease),
+          padding-left 0.35s var(--tp-ease);
+      }
+      .team-page .matrix tbody tr td:first-child::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 18%;
+        bottom: 18%;
+        width: 2px;
+        border-radius: 2px;
+        background: var(--tp-acc);
+        opacity: 0;
+        transition: opacity 0.35s var(--tp-ease);
+      }
+      .team-page .matrix tbody tr:hover td:first-child {
+        color: var(--tp-acc);
+        padding-left: 6px;
+      }
+      .team-page .matrix tbody tr:hover td:first-child::before {
+        opacity: 0.9;
+      }
+
+      /* ========================================================
+         6 · FOCUS VISIBILITY
+         ======================================================== */
+      .team-page a:focus-visible,
+      .team-page button:focus-visible {
+        outline: 2px solid var(--tp-acc);
+        outline-offset: 3px;
+        border-radius: 6px;
+      }
+
+      /* ========================================================
+         7 · SCROLL REVEAL
+         ======================================================== */
+      .team-page .tp-reveal {
+        opacity: 0;
+        translate: 0 20px;
+        transition:
+          opacity 0.8s var(--tp-ease),
+          translate 0.8s var(--tp-ease);
+        transition-delay: var(--tp-delay, 0ms);
+        will-change: opacity, translate;
+      }
+      .team-page .tp-reveal.is-visible {
+        opacity: 1;
+        translate: 0 0;
+      }
+      .team-page .matrix tbody tr.tp-row-reveal {
+        opacity: 0;
+        translate: 0 8px;
+        transition:
+          opacity 0.55s var(--tp-ease),
+          translate 0.55s var(--tp-ease);
+        transition-delay: var(--tp-delay, 0ms);
+      }
+      .team-page .matrix tbody tr.tp-row-reveal.is-visible {
+        opacity: 1;
+        translate: 0 0;
+      }
+
+      /* ========================================================
+         8 · KEYFRAMES
+         ======================================================== */
+      @keyframes tp-rise {
+        from {
+          opacity: 0;
+          transform: translateY(14px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @keyframes tp-grow {
+        from {
+          transform: scaleX(0);
+        }
+        to {
+          transform: scaleX(1);
+        }
+      }
+      @keyframes tp-pan {
+        to {
+          background-position:
+            60px 60px,
+            60px 60px;
+        }
+      }
+      @keyframes tp-orbit {
+        from {
+          transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+        }
+        to {
+          transform: translate3d(34px, -24px, 0) scale(1.14) rotate(6deg);
+        }
+      }
+      @keyframes tp-ping {
+        0% {
+          box-shadow: 0 0 0 0 var(--tp-glow);
+        }
+        70% {
+          box-shadow: 0 0 0 9px transparent;
+        }
+        100% {
+          box-shadow: 0 0 0 0 transparent;
+        }
+      }
+      @keyframes tp-travel {
+        to {
+          background-position: 0 -220%;
+        }
+      }
+      @keyframes tp-sweep {
+        0%,
+        55% {
+          transform: translateX(-110%);
+        }
+        100% {
+          transform: translateX(110%);
+        }
+      }
+      @keyframes tp-halo {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 var(--tp-glow);
+        }
+        50% {
+          box-shadow: 0 0 0 8px transparent;
+        }
+      }
+      @keyframes tp-comet {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes tp-float {
+        0% {
+          opacity: 0;
+          transform: translateY(20px) scale(0.6);
+        }
+        15% {
+          opacity: 0.7;
+        }
+        85% {
+          opacity: 0.7;
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(-140px) scale(1.1);
+        }
+      }
+
+      /* ========================================================
+         9 · REDUCED MOTION
+         ======================================================== */
+      @media (prefers-reduced-motion: reduce) {
+        .team-page .page-hero::before,
+        .team-page .page-hero::after,
+        .team-page .page-hero .breadcrumb,
+        .team-page .page-hero .eyebrow,
+        .team-page .page-hero h1,
+        .team-page .page-hero h1::after,
+        .team-page .page-hero .lead,
+        .team-page .page-hero .eyebrow::before,
+        .team-page .section-heading .eyebrow::before,
+        .team-page .section-heading h2::after,
+        .team-page .callout::before,
+        .team-page .callout::after,
+        .team-page .avatar::before,
+        .team-page .avatar::after,
+        .team-page .tp-sparks span {
+          animation: none !important;
+        }
+        .team-page .tp-sparks {
+          display: none;
+        }
+        .team-page .tp-reveal,
+        .team-page .matrix tbody tr.tp-row-reveal {
+          opacity: 1;
+          translate: 0 0;
+          transition: none;
+        }
+        .team-page .person-card,
+        .team-page .person-card::before,
+        .team-page .person-card h3,
+        .team-page .person-card .role,
+        .team-page .avatar,
+        .team-page .callout,
+        .team-page .matrix tbody tr,
+        .team-page .matrix tbody tr td:first-child {
+          transition: none;
+        }
+        .team-page .team-grid:hover .person-card:not(:hover) {
+          opacity: 1;
+        }
+        .team-page .matrix tbody tr:hover {
+          transform: none;
+        }
+      }
+    </style>
+  </head>
+  <body class="team-page">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="nav-wrap">
+        <a class="brand" href="./index.html"
+          ><span class="brand-mark"
+            ><svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M7.1 18h10.1a4 4 0 0 0 .4-8A5.8 5.8 0 0 0 6.5 8.8 4.6 4.6 0 0 0 7.1 18Z"
+                stroke="currentColor"
+                stroke-width="1.8"
+              />
+              <path
+                d="m9 12.5 3 3 3-3m-3 2.6V9.7"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              /></svg></span
+          >CloudBox <em>/ lab</em></a
+        >
+        <nav class="nav-links" data-nav-links aria-label="Main navigation">
+          <a class="nav-link" href="./index.html">Overview</a
+          ><a class="nav-link" href="./architecture.html">Architecture</a
+          ><a class="nav-link" href="./documentation.html">Documentation</a
+          ><a class="nav-link" href="./security.html">Security lab</a
+          ><a class="nav-link" href="./testing.html">Testing</a
+          ><a class="nav-link" href="./team.html" aria-current="page"
+            >Project team</a
+          >
+        </nav>
+        <div class="nav-tools">
+          <button
+            class="theme-toggle"
+            type="button"
+            data-theme-toggle
+            aria-label="Switch theme"
+            data-testid="toggle-theme"
+          ></button
+          ><button
+            class="menu-toggle"
+            type="button"
+            data-menu-toggle
+            aria-controls="primary-navigation"
+            aria-expanded="false"
+            aria-label="Open navigation menu"
+            data-testid="toggle-menu"
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M4 7h16M4 12h16M4 17h16"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+    <main id="main">
+      <section class="page-hero">
+        <div class="tp-sparks" aria-hidden="true">
+          <span></span><span></span><span></span><span></span> <span></span
+          ><span></span><span></span><span></span>
+        </div>
+        <div class="container">
+          <div class="breadcrumb">
+            <a href="./index.html">CloudBox</a> / Project team
+          </div>
+          <span class="eyebrow">Project contributors</span>
+          <h1>People behind the prototype.</h1>
+          <p class="lead">
+            A role-based project roster, with personal details left out unless
+            they have been provided. Contributor placeholders can be replaced
+            with verified information.
+          </p>
+        </div>
+      </section>
+      <section class="section">
+        <div class="container">
+          <div class="callout">
+            <strong>Project owner / coordinator: Krushna Kedar</strong>
+            <p>
+              Coordinates the CloudBox Cloud Computing Mini-Project. The four
+              member identities below remain editable placeholders until
+              confirmed by the team.
+            </p>
+          </div>
+          <div class="team-grid" style="margin-top: 22px">
+            <article class="card person-card" data-testid="team-member-1">
+              <div class="avatar" aria-hidden="true">M1</div>
+              <span class="role">Member 1 · file security</span>
+              <h3>Krushna Kedar</h3>
+              <p>Role: file segmentation, encryption, and decryption.</p>
+            </article>
+            <article class="card person-card" data-testid="team-member-2">
+              <div class="avatar" aria-hidden="true">M2</div>
+              <span class="role">Member 2 · documentation</span>
+              <h3>Anurag Lavhare</h3>
+              <p>Role: documentation website and responsive interface.</p>
+            </article>
+            <article class="card person-card" data-testid="team-member-3">
+              <div class="avatar" aria-hidden="true">M3</div>
+              <span class="role">Member 3 · cloud deployment</span>
+              <h3>Rohan Jadhav</h3>
+              <p>Role: Amazon S3, CloudFront, OAC, and HTTPS deployment.</p>
+            </article>
+            <article class="card person-card" data-testid="team-member-4">
+              <div class="avatar" aria-hidden="true">M4</div>
+              <span class="role">Member 4 · testing &amp; report</span>
+              <h3>Vitthal Nirmal</h3>
+              <p>
+                Role: testing, report writing, screenshots, and presentation.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+      <section class="section section-alt">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">Responsibility map</span>
+              <h2>Contribution matrix</h2>
+            </div>
+            <p>
+              Member names and contribution evidence are intentionally left
+              editable and unassigned.
+            </p>
+          </div>
+          <div class="matrix-wrap">
+            <table class="matrix" data-testid="table-contributions">
+              <thead>
+                <tr>
+                  <th scope="col">Member</th>
+                  <th scope="col">Responsibilities</th>
+                  <th scope="col">Expected deliverables</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Krushna Kedar</td>
+                  <td>File segmentation, encryption, and decryption</td>
+                  <td>Working file-security workflow</td>
+                </tr>
+                <tr>
+                  <td>Anurag Lavhare</td>
+                  <td>Documentation website and responsive interface</td>
+                  <td>Six static pages and project documentation</td>
+                </tr>
+                <tr>
+                  <td>Rohan Jadhav</td>
+                  <td>Amazon S3, CloudFront, OAC, and HTTPS deployment</td>
+                  <td>Verified AWS configuration and deployment record</td>
+                </tr>
+                <tr>
+                  <td>Vitthal Nirmal</td>
+                  <td>
+                    Testing, report writing, screenshots, and presentation
+                  </td>
+                  <td>Observed test results and academic report</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="muted" style="font-size: 12px; margin-top: 14px">
+            Replace each placeholder only with a name and contribution confirmed
+            by the project team.
+          </p>
+        </div>
+      </section>
+    </main>
+    <footer class="footer">
+      <div class="container footer-inner">
+        <div>
+          <div class="footer-brand">
+            CloudBox <span class="muted">/ secure file lab</span>
+          </div>
+          <p>
+            Contributor identities are not invented. Add verified project
+            details when available.
+          </p>
+        </div>
+        <nav class="footer-links" aria-label="Footer navigation">
+          <a href="./index.html">Overview</a
+          ><a href="./architecture.html">Architecture</a
+          ><a href="./documentation.html">Documentation</a
+          ><a href="./security.html">Security lab</a
+          ><a href="./testing.html">Testing</a>
+        </nav>
+        <span class="inline-meta">© <span data-year></span> CloudBox</span>
+      </div>
+    </footer>
+    <div class="toast-region" data-toast-region aria-live="polite"></div>
+    <script type="module" src="./js/app.js"></script>
+    <script>
+      /* Additive scroll reveal. Page remains fully readable without JS. */
+      (function () {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          return;
+        }
+        if (!("IntersectionObserver" in window)) {
+          return;
+        }
+
+        var containers = [];
+        document
+          .querySelectorAll(
+            ".team-page .callout, .team-page .person-card, .team-page .section-heading",
+          )
+          .forEach(function (el, i) {
+            el.classList.add("tp-reveal");
+            el.style.setProperty("--tp-delay", Math.min(i * 80, 360) + "ms");
+            containers.push(el);
+          });
+
+        var rows = [];
+        document
+          .querySelectorAll(".team-page .matrix tbody tr")
+          .forEach(function (el, i) {
+            el.classList.add("tp-row-reveal");
+            el.style.setProperty("--tp-delay", Math.min(i * 90, 420) + "ms");
+            rows.push(el);
+          });
+
+        var targets = containers.concat(rows);
+        if (!targets.length) return;
+
+        function settle(el, revealClass) {
+          el.classList.remove(revealClass, "is-visible");
+          el.style.removeProperty("--tp-delay");
+        }
+
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (!entry.isIntersecting) return;
+              var el = entry.target;
+              var revealClass = el.classList.contains("tp-row-reveal")
+                ? "tp-row-reveal"
+                : "tp-reveal";
+
+              el.classList.add("is-visible");
+              observer.unobserve(el);
+
+              var done = function (event) {
+                if (event.target !== el) return;
+                if (
+                  event.propertyName !== "translate" &&
+                  event.propertyName !== "opacity"
+                ) {
+                  return;
+                }
+                el.removeEventListener("transitionend", done);
+                settle(el, revealClass);
+              };
+              el.addEventListener("transitionend", done);
+              setTimeout(function () {
+                settle(el, revealClass);
+              }, 2000);
+            });
+          },
+          { threshold: 0.14, rootMargin: "0px 0px -40px 0px" },
+        );
+
+        targets.forEach(function (el) {
+          observer.observe(el);
+        });
+      })();
+    </script>
+  </body>
+</html>

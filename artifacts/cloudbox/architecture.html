@@ -1,16 +1,805 @@
 <!doctype html>
-<html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Architecture — CloudBox</title><meta name="description" content="Separate CloudBox's website delivery path from its client-side file encryption workflow."><link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./css/style.css"></head>
-<body><a class="skip-link" href="#main">Skip to content</a><header class="site-header"><div class="nav-wrap"><a class="brand" href="./index.html"><span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7.1 18h10.1a4 4 0 0 0 .4-8A5.8 5.8 0 0 0 6.5 8.8 4.6 4.6 0 0 0 7.1 18Z" stroke="currentColor" stroke-width="1.8"/><path d="m9 12.5 3 3 3-3m-3 2.6V9.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>CloudBox <em>/ lab</em></a><nav class="nav-links" data-nav-links aria-label="Main navigation"><a class="nav-link" href="./index.html">Overview</a><a class="nav-link" href="./architecture.html" aria-current="page">Architecture</a><a class="nav-link" href="./documentation.html">Documentation</a><a class="nav-link" href="./security.html">Security lab</a><a class="nav-link" href="./testing.html">Testing</a><a class="nav-link" href="./team.html">Project team</a></nav><div class="nav-tools"><button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch theme" data-testid="toggle-theme"></button><button class="menu-toggle" type="button" data-menu-toggle aria-controls="primary-navigation" aria-expanded="false" aria-label="Open navigation menu" data-testid="toggle-menu"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div></div></header>
-<main id="main"><section class="page-hero"><div class="container"><div class="breadcrumb"><a href="./index.html">CloudBox</a> / Architecture</div><span class="eyebrow">Two paths, clearly separated</span><h1>Architecture</h1><p class="lead">Website delivery and file confidentiality solve different problems. The first controls how static assets reach a browser; the second protects the bytes of a selected file.</p></div></section>
-<section class="section"><div class="container">
-  <div class="section-heading"><div><span class="eyebrow">Path 01 · web delivery</span><h2>Public edge. Private origin.</h2></div><p>CloudFront serves the static site over HTTPS. OAC signs origin requests so the S3 bucket can remain private.</p></div>
-  <div class="diagram-panel" data-diagram="delivery" data-testid="diagram-delivery"><div class="diagram-label">Static website request path</div><div class="diagram-flow" role="img" aria-label="Browser to HTTPS to CloudFront to Origin Access Control to private Amazon S3"><div class="diagram-node"><strong>Browser</strong><span>visitor requests a page</span></div><b class="diagram-arrow" aria-hidden="true">→</b><div class="diagram-node"><strong>HTTPS</strong><span>TLS in transit</span></div><b class="diagram-arrow" aria-hidden="true">→</b><div class="diagram-node"><strong>CloudFront</strong><span>edge cache / delivery</span></div><b class="diagram-arrow" aria-hidden="true">→</b><div class="diagram-node"><strong>OAC</strong><span>signed origin access</span></div><b class="diagram-arrow" aria-hidden="true">→</b><div class="diagram-node"><strong>Private S3</strong><span>static object origin</span></div></div><p class="legend"><strong>Trust boundary:</strong> the bucket policy should grant the intended CloudFront distribution access, not anonymous public reads. No bucket or distribution is configured by this documentation site.</p></div>
-  <div class="grid-2" style="margin-top:16px"><article class="card"><h3>Why OAC</h3><p>Origin Access Control lets CloudFront authenticate requests to an S3 origin. This keeps origin access explicit and supports a private bucket policy.</p></article><article class="card"><h3>What HTTPS covers</h3><p>HTTPS protects network traffic between browser and delivery endpoint. It does not encrypt an object at rest by itself or replace client-side file encryption.</p></article></div>
-</div></section>
-<section class="section section-alt"><div class="container">
-  <div class="section-heading"><div><span class="eyebrow">Path 02 · file security</span><h2>Transform the bytes before they leave the browser.</h2></div><p>The prototype models chunk-based encryption and reconstruction. A practical package format must preserve ordering and metadata reliably.</p></div>
-  <div class="diagram-panel" data-diagram="file-security" data-testid="diagram-file-security"><div class="diagram-label">Client-side file protection workflow</div><div class="diagram-flow" role="img" aria-label="Original file to ordered blocks to AES-256-GCM encryption to encrypted package to optional object storage and content delivery"><div class="diagram-node"><strong>Original</strong><span>local source file</span></div><b class="diagram-arrow" aria-hidden="true">→</b><div class="diagram-node"><strong>Blocks</strong><span>configured size</span></div><b class="diagram-arrow" aria-hidden="true">→</b><div class="diagram-node"><strong>AES-256-GCM</strong><span>ciphertext + tag</span></div><b class="diagram-arrow" aria-hidden="true">→</b><div class="diagram-node"><strong>Package</strong><span>ordered encrypted data</span></div><b class="diagram-arrow" aria-hidden="true">→</b><div class="diagram-node"><strong>Object / CDN</strong><span>storage and delivery</span></div></div><p class="legend">On retrieval: download package → supply the separately-held key → authenticate and decrypt each block → restore original order → reconstruct the output file.</p></div>
-  <div class="grid-3" style="margin-top:16px"><article class="card"><h3>Segmentation</h3><p>Bound memory use and make block count explicit. Chunking alone is not encryption and does not guarantee resumable transfer.</p></article><article class="card"><h3>Authenticated encryption</h3><p>GCM detects tampering during decryption. Nonces must be unique for a key, and every block's authentication must succeed.</p></article><article class="card"><h3>Separate key material</h3><p>The encrypted package must not embed a casually recoverable raw key. Key custody and sharing remain user responsibilities in this prototype.</p></article></div>
-</div></section>
-<section class="section"><div class="container"><div class="section-heading"><div><span class="eyebrow">Important boundary</span><h2>There is no authenticated upload API.</h2></div></div><div class="callout"><strong>Static site, not a storage control plane.</strong><p>This frontend does not mint credentials, authenticate users, authorize object access, or issue presigned uploads. A CloudFront distribution may deliver configured objects, but safe upload requires a separately designed identity and authorization service. Never put AWS credentials in browser code.</p></div><div class="hero-actions"><a class="button button-primary" href="./security.html">Open the local security lab</a><a class="button button-secondary" href="./documentation.html">Read implementation notes</a></div></div></section></main>
-<footer class="footer"><div class="container footer-inner"><div><div class="footer-brand">CloudBox <span class="muted">/ secure file lab</span></div><p>Educational architecture. Private origin and delivery require independent configuration and verification.</p></div><nav class="footer-links" aria-label="Footer navigation"><a href="./index.html">Overview</a><a href="./documentation.html">Documentation</a><a href="./security.html">Security lab</a><a href="./team.html">Team</a><a href="./testing.html">Testing</a></nav><span class="inline-meta">© <span data-year></span> CloudBox</span></div></footer><div class="toast-region" data-toast-region aria-live="polite"></div><script type="module" src="./js/app.js"></script><script type="module" src="./js/diagrams.js"></script></body></html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Architecture — CloudBox</title>
+    <meta
+      name="description"
+      content="Separate CloudBox's website delivery path from its client-side file encryption workflow."
+    />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <style>
+      /* ============================================================
+         Architecture page — UI polish & motion (additive only).
+         Everything is scoped to .arch-page so other pages are
+         completely unaffected. Colours are derived from currentColor
+         and theme accent tokens so light/dark themes both work.
+         ============================================================ */
+      .arch-page {
+        --arch-acc: var(--accent, #6ea8fe);
+        --arch-acc-2: var(--accent-2, #a78bfa);
+        --arch-line: color-mix(in srgb, currentColor 15%, transparent);
+        --arch-glow: color-mix(in srgb, var(--arch-acc) 40%, transparent);
+        --arch-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+
+      /* ---------- Hero: ambient glow, grid drift, entrance ---------- */
+      .arch-page .page-hero {
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+      }
+      .arch-page .hero-glow {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+      .arch-page .hero-glow::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(var(--arch-line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--arch-line) 1px, transparent 1px);
+        background-size: 52px 52px;
+        opacity: 0.3;
+        -webkit-mask-image: radial-gradient(
+          ellipse 70% 60% at 50% 0%,
+          #000 0%,
+          transparent 72%
+        );
+        mask-image: radial-gradient(
+          ellipse 70% 60% at 50% 0%,
+          #000 0%,
+          transparent 72%
+        );
+        animation: arch-grid 26s linear infinite;
+      }
+      .arch-page .hero-glow span {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(70px);
+        opacity: 0.32;
+      }
+      .arch-page .hero-glow span:nth-child(1) {
+        width: min(46vw, 520px);
+        aspect-ratio: 1;
+        left: -8%;
+        top: -32%;
+        background: radial-gradient(
+          circle at 30% 30%,
+          var(--arch-acc),
+          transparent 65%
+        );
+        animation: arch-drift 16s ease-in-out infinite alternate;
+      }
+      .arch-page .hero-glow span:nth-child(2) {
+        width: min(40vw, 460px);
+        aspect-ratio: 1;
+        right: -6%;
+        top: -20%;
+        background: radial-gradient(
+          circle at 60% 40%,
+          var(--arch-acc-2),
+          transparent 65%
+        );
+        animation: arch-drift 21s ease-in-out infinite alternate-reverse;
+      }
+      .arch-page .page-hero .container {
+        position: relative;
+        z-index: 1;
+      }
+      .arch-page .page-hero .breadcrumb,
+      .arch-page .page-hero .eyebrow,
+      .arch-page .page-hero h1,
+      .arch-page .page-hero .lead {
+        animation: arch-fade-up 0.75s var(--arch-ease) both;
+      }
+      .arch-page .page-hero .breadcrumb {
+        animation-delay: 0.04s;
+      }
+      .arch-page .page-hero .eyebrow {
+        animation-delay: 0.14s;
+      }
+      .arch-page .page-hero h1 {
+        animation-delay: 0.24s;
+      }
+      .arch-page .page-hero .lead {
+        animation-delay: 0.34s;
+      }
+
+      /* ---------- Eyebrow live indicator dot ---------- */
+      .arch-page .page-hero .eyebrow,
+      .arch-page .section-heading .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+      }
+      .arch-page .page-hero .eyebrow::before,
+      .arch-page .section-heading .eyebrow::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex: none;
+        background: var(--arch-acc);
+        box-shadow: 0 0 0 0 var(--arch-glow);
+        animation: arch-ping 2.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+      }
+
+      /* ---------- Section heading accent rule ---------- */
+      .arch-page .section-heading h2 {
+        position: relative;
+        padding-bottom: 0.55rem;
+      }
+      .arch-page .section-heading h2::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        height: 3px;
+        width: 58px;
+        border-radius: 99px;
+        background: linear-gradient(90deg, var(--arch-acc), var(--arch-acc-2));
+        transform-origin: left center;
+        animation: arch-rule 1s var(--arch-ease) both;
+      }
+
+      /* ---------- Diagram panels ---------- */
+      .arch-page .diagram-panel {
+        position: relative;
+        overflow: hidden;
+        transition:
+          box-shadow 0.45s var(--arch-ease),
+          transform 0.45s var(--arch-ease);
+      }
+      .arch-page .diagram-panel::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          620px circle at 12% -10%,
+          color-mix(in srgb, var(--arch-acc) 15%, transparent),
+          transparent 62%
+        );
+        opacity: 0.9;
+      }
+      .arch-page .diagram-panel::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        border-radius: inherit;
+        padding: 1px;
+        background: linear-gradient(
+          120deg,
+          color-mix(in srgb, var(--arch-acc) 60%, transparent),
+          transparent 38%,
+          transparent 62%,
+          color-mix(in srgb, var(--arch-acc-2) 60%, transparent)
+        );
+        -webkit-mask:
+          linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask:
+          linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        mask-composite: exclude;
+        opacity: 0;
+        transition: opacity 0.45s var(--arch-ease);
+      }
+      .arch-page .diagram-panel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 22px 55px -26px var(--arch-glow);
+      }
+      .arch-page .diagram-panel:hover::after {
+        opacity: 1;
+      }
+      .arch-page [data-diagram="file-security"] {
+        --arch-acc: var(--accent-2, #a78bfa);
+      }
+
+      .arch-page .diagram-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .arch-page .diagram-label::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        flex: none;
+        background: currentColor;
+        opacity: 0.55;
+        animation: arch-blink 2.2s ease-in-out infinite;
+      }
+
+      /* ---------- Diagram nodes ---------- */
+      .arch-page .diagram-node {
+        position: relative;
+        transition:
+          transform 0.4s var(--arch-ease),
+          box-shadow 0.4s var(--arch-ease),
+          border-color 0.4s var(--arch-ease);
+      }
+      .arch-page .diagram-node strong {
+        transition: color 0.35s var(--arch-ease);
+      }
+      .arch-page .diagram-node:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 18px 36px -20px
+          color-mix(in srgb, currentColor 70%, transparent);
+      }
+      .arch-page .diagram-node:hover strong {
+        color: var(--arch-acc);
+      }
+
+      /* Arrows: opacity-only pulse so any base rotation is preserved */
+      .arch-page .diagram-arrow {
+        animation: arch-arrow 2.4s ease-in-out infinite;
+      }
+      .arch-page .diagram-flow .diagram-arrow:nth-of-type(1) {
+        animation-delay: 0s;
+      }
+      .arch-page .diagram-flow .diagram-arrow:nth-of-type(2) {
+        animation-delay: 0.2s;
+      }
+      .arch-page .diagram-flow .diagram-arrow:nth-of-type(3) {
+        animation-delay: 0.4s;
+      }
+      .arch-page .diagram-flow .diagram-arrow:nth-of-type(4) {
+        animation-delay: 0.6s;
+      }
+
+      /* ---------- Cards ---------- */
+      .arch-page .card {
+        position: relative;
+        transition:
+          transform 0.4s var(--arch-ease),
+          box-shadow 0.4s var(--arch-ease),
+          border-color 0.4s var(--arch-ease);
+      }
+      .arch-page .card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 16px;
+        right: 16px;
+        height: 2px;
+        border-radius: 2px;
+        pointer-events: none;
+        background: linear-gradient(90deg, var(--arch-acc), var(--arch-acc-2));
+        transform: scaleX(0);
+        transform-origin: left center;
+        transition: transform 0.45s var(--arch-ease);
+        opacity: 0.9;
+      }
+      .arch-page .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 42px -26px
+          color-mix(in srgb, currentColor 75%, transparent);
+        border-color: color-mix(in srgb, var(--arch-acc) 45%, var(--arch-line));
+      }
+      .arch-page .card:hover::before {
+        transform: scaleX(1);
+      }
+
+      /* ---------- Callout: travelling accent bar + soft sheen ---------- */
+      .arch-page .callout {
+        position: relative;
+        overflow: hidden;
+      }
+      .arch-page .callout::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: linear-gradient(
+          180deg,
+          var(--arch-acc),
+          var(--arch-acc-2),
+          var(--arch-acc)
+        );
+        background-size: 100% 220%;
+        animation: arch-slide 6s linear infinite;
+      }
+      .arch-page .callout::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(
+          100deg,
+          transparent 32%,
+          color-mix(in srgb, var(--arch-acc) 11%, transparent) 50%,
+          transparent 68%
+        );
+        transform: translateX(-110%);
+        animation: arch-sheen 8s ease-in-out infinite;
+      }
+
+      /* ---------- Buttons ---------- */
+      .arch-page .button {
+        position: relative;
+        overflow: hidden;
+        transition:
+          transform 0.3s var(--arch-ease),
+          box-shadow 0.3s var(--arch-ease),
+          filter 0.3s var(--arch-ease);
+      }
+      .arch-page .button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 26px -14px var(--arch-glow);
+      }
+      .arch-page .button::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(
+          100deg,
+          transparent 25%,
+          rgba(255, 255, 255, 0.28) 50%,
+          transparent 75%
+        );
+        transform: translateX(-130%);
+        transition: transform 0.75s var(--arch-ease);
+      }
+      .arch-page .button:hover::after {
+        transform: translateX(130%);
+      }
+
+      /* ---------- Focus visibility ---------- */
+      .arch-page a:focus-visible,
+      .arch-page button:focus-visible {
+        outline: 2px solid var(--arch-acc);
+        outline-offset: 3px;
+        border-radius: 6px;
+      }
+
+      /* ---------- Scroll reveal (class added by JS only) ---------- */
+      .arch-page .reveal {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.7s var(--arch-ease),
+          transform 0.7s var(--arch-ease);
+        transition-delay: var(--reveal-delay, 0ms);
+        will-change: opacity, transform;
+      }
+      .arch-page .reveal.is-visible {
+        opacity: 1;
+        transform: none;
+      }
+
+      /* ---------- Keyframes ---------- */
+      @keyframes arch-fade-up {
+        from {
+          opacity: 0;
+          transform: translateY(14px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @keyframes arch-drift {
+        from {
+          transform: translate3d(0, 0, 0) scale(1);
+        }
+        to {
+          transform: translate3d(28px, -22px, 0) scale(1.14);
+        }
+      }
+      @keyframes arch-grid {
+        to {
+          background-position:
+            52px 52px,
+            52px 52px;
+        }
+      }
+      @keyframes arch-ping {
+        0% {
+          box-shadow: 0 0 0 0 var(--arch-glow);
+        }
+        70% {
+          box-shadow: 0 0 0 9px transparent;
+        }
+        100% {
+          box-shadow: 0 0 0 0 transparent;
+        }
+      }
+      @keyframes arch-rule {
+        from {
+          transform: scaleX(0);
+        }
+        to {
+          transform: scaleX(1);
+        }
+      }
+      @keyframes arch-blink {
+        0%,
+        100% {
+          opacity: 0.35;
+        }
+        50% {
+          opacity: 0.9;
+        }
+      }
+      @keyframes arch-arrow {
+        0%,
+        100% {
+          opacity: 0.45;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+      @keyframes arch-slide {
+        to {
+          background-position: 0 -220%;
+        }
+      }
+      @keyframes arch-sheen {
+        0%,
+        55% {
+          transform: translateX(-110%);
+        }
+        100% {
+          transform: translateX(110%);
+        }
+      }
+
+      /* ---------- Reduced motion ---------- */
+      @media (prefers-reduced-motion: reduce) {
+        .arch-page .hero-glow span,
+        .arch-page .hero-glow::before,
+        .arch-page .page-hero .breadcrumb,
+        .arch-page .page-hero .eyebrow,
+        .arch-page .page-hero h1,
+        .arch-page .page-hero .lead,
+        .arch-page .page-hero .eyebrow::before,
+        .arch-page .section-heading .eyebrow::before,
+        .arch-page .section-heading h2::after,
+        .arch-page .diagram-label::before,
+        .arch-page .diagram-arrow,
+        .arch-page .callout::before,
+        .arch-page .callout::after {
+          animation: none !important;
+        }
+        .arch-page .reveal {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+        .arch-page .card,
+        .arch-page .diagram-panel,
+        .arch-page .diagram-node,
+        .arch-page .button {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body class="arch-page">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="nav-wrap">
+        <a class="brand" href="./index.html"
+          ><span class="brand-mark"
+            ><svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M7.1 18h10.1a4 4 0 0 0 .4-8A5.8 5.8 0 0 0 6.5 8.8 4.6 4.6 0 0 0 7.1 18Z"
+                stroke="currentColor"
+                stroke-width="1.8"
+              />
+              <path
+                d="m9 12.5 3 3 3-3m-3 2.6V9.7"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              /></svg></span
+          >CloudBox <em>/ lab</em></a
+        >
+        <nav class="nav-links" data-nav-links aria-label="Main navigation">
+          <a class="nav-link" href="./index.html">Overview</a
+          ><a class="nav-link" href="./architecture.html" aria-current="page"
+            >Architecture</a
+          ><a class="nav-link" href="./documentation.html">Documentation</a
+          ><a class="nav-link" href="./security.html">Security lab</a
+          ><a class="nav-link" href="./testing.html">Testing</a
+          ><a class="nav-link" href="./team.html">Project team</a>
+        </nav>
+        <div class="nav-tools">
+          <button
+            class="theme-toggle"
+            type="button"
+            data-theme-toggle
+            aria-label="Switch theme"
+            data-testid="toggle-theme"
+          ></button
+          ><button
+            class="menu-toggle"
+            type="button"
+            data-menu-toggle
+            aria-controls="primary-navigation"
+            aria-expanded="false"
+            aria-label="Open navigation menu"
+            data-testid="toggle-menu"
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M4 7h16M4 12h16M4 17h16"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+    <main id="main">
+      <section class="page-hero">
+        <div class="hero-glow" aria-hidden="true">
+          <span></span><span></span>
+        </div>
+        <div class="container">
+          <div class="breadcrumb">
+            <a href="./index.html">CloudBox</a> / Architecture
+          </div>
+          <span class="eyebrow">Two paths, clearly separated</span>
+          <h1>Architecture</h1>
+          <p class="lead">
+            Website delivery and file confidentiality solve different problems.
+            The first controls how static assets reach a browser; the second
+            protects the bytes of a selected file.
+          </p>
+        </div>
+      </section>
+      <section class="section">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">Path 01 · web delivery</span>
+              <h2>Public edge. Private origin.</h2>
+            </div>
+            <p>
+              CloudFront serves the static site over HTTPS. OAC signs origin
+              requests so the S3 bucket can remain private.
+            </p>
+          </div>
+          <div
+            class="diagram-panel"
+            data-diagram="delivery"
+            data-testid="diagram-delivery"
+          >
+            <div class="diagram-label">Static website request path</div>
+            <div
+              class="diagram-flow"
+              role="img"
+              aria-label="Browser to HTTPS to CloudFront to Origin Access Control to private Amazon S3"
+            >
+              <div class="diagram-node">
+                <strong>Browser</strong><span>visitor requests a page</span>
+              </div>
+              <b class="diagram-arrow" aria-hidden="true">→</b>
+              <div class="diagram-node">
+                <strong>HTTPS</strong><span>TLS in transit</span>
+              </div>
+              <b class="diagram-arrow" aria-hidden="true">→</b>
+              <div class="diagram-node">
+                <strong>CloudFront</strong><span>edge cache / delivery</span>
+              </div>
+              <b class="diagram-arrow" aria-hidden="true">→</b>
+              <div class="diagram-node">
+                <strong>OAC</strong><span>signed origin access</span>
+              </div>
+              <b class="diagram-arrow" aria-hidden="true">→</b>
+              <div class="diagram-node">
+                <strong>Private S3</strong><span>static object origin</span>
+              </div>
+            </div>
+            <p class="legend">
+              <strong>Trust boundary:</strong> the bucket policy should grant
+              the intended CloudFront distribution access, not anonymous public
+              reads. No bucket or distribution is configured by this
+              documentation site.
+            </p>
+          </div>
+          <div class="grid-2" style="margin-top: 16px">
+            <article class="card">
+              <h3>Why OAC</h3>
+              <p>
+                Origin Access Control lets CloudFront authenticate requests to
+                an S3 origin. This keeps origin access explicit and supports a
+                private bucket policy.
+              </p>
+            </article>
+            <article class="card">
+              <h3>What HTTPS covers</h3>
+              <p>
+                HTTPS protects network traffic between browser and delivery
+                endpoint. It does not encrypt an object at rest by itself or
+                replace client-side file encryption.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+      <section class="section section-alt">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">Path 02 · file security</span>
+              <h2>Transform the bytes before they leave the browser.</h2>
+            </div>
+            <p>
+              The prototype models chunk-based encryption and reconstruction. A
+              practical package format must preserve ordering and metadata
+              reliably.
+            </p>
+          </div>
+          <div
+            class="diagram-panel"
+            data-diagram="file-security"
+            data-testid="diagram-file-security"
+          >
+            <div class="diagram-label">
+              Client-side file protection workflow
+            </div>
+            <div
+              class="diagram-flow"
+              role="img"
+              aria-label="Original file to ordered blocks to AES-256-GCM encryption to encrypted package to optional object storage and content delivery"
+            >
+              <div class="diagram-node">
+                <strong>Original</strong><span>local source file</span>
+              </div>
+              <b class="diagram-arrow" aria-hidden="true">→</b>
+              <div class="diagram-node">
+                <strong>Blocks</strong><span>configured size</span>
+              </div>
+              <b class="diagram-arrow" aria-hidden="true">→</b>
+              <div class="diagram-node">
+                <strong>AES-256-GCM</strong><span>ciphertext + tag</span>
+              </div>
+              <b class="diagram-arrow" aria-hidden="true">→</b>
+              <div class="diagram-node">
+                <strong>Package</strong><span>ordered encrypted data</span>
+              </div>
+              <b class="diagram-arrow" aria-hidden="true">→</b>
+              <div class="diagram-node">
+                <strong>Object / CDN</strong><span>storage and delivery</span>
+              </div>
+            </div>
+            <p class="legend">
+              On retrieval: download package → supply the separately-held key →
+              authenticate and decrypt each block → restore original order →
+              reconstruct the output file.
+            </p>
+          </div>
+          <div class="grid-3" style="margin-top: 16px">
+            <article class="card">
+              <h3>Segmentation</h3>
+              <p>
+                Bound memory use and make block count explicit. Chunking alone
+                is not encryption and does not guarantee resumable transfer.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Authenticated encryption</h3>
+              <p>
+                GCM detects tampering during decryption. Nonces must be unique
+                for a key, and every block's authentication must succeed.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Separate key material</h3>
+              <p>
+                The encrypted package must not embed a casually recoverable raw
+                key. Key custody and sharing remain user responsibilities in
+                this prototype.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+      <section class="section">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">Important boundary</span>
+              <h2>There is no authenticated upload API.</h2>
+            </div>
+          </div>
+          <div class="callout">
+            <strong>Static site, not a storage control plane.</strong>
+            <p>
+              This frontend does not mint credentials, authenticate users,
+              authorize object access, or issue presigned uploads. A CloudFront
+              distribution may deliver configured objects, but safe upload
+              requires a separately designed identity and authorization service.
+              Never put AWS credentials in browser code.
+            </p>
+          </div>
+          <div class="hero-actions">
+            <a class="button button-primary" href="./security.html"
+              >Open the local security lab</a
+            ><a class="button button-secondary" href="./documentation.html"
+              >Read implementation notes</a
+            >
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="footer">
+      <div class="container footer-inner">
+        <div>
+          <div class="footer-brand">
+            CloudBox <span class="muted">/ secure file lab</span>
+          </div>
+          <p>
+            Educational architecture. Private origin and delivery require
+            independent configuration and verification.
+          </p>
+        </div>
+        <nav class="footer-links" aria-label="Footer navigation">
+          <a href="./index.html">Overview</a
+          ><a href="./documentation.html">Documentation</a
+          ><a href="./security.html">Security lab</a
+          ><a href="./team.html">Team</a><a href="./testing.html">Testing</a>
+        </nav>
+        <span class="inline-meta">© <span data-year></span> CloudBox</span>
+      </div>
+    </footer>
+    <div class="toast-region" data-toast-region aria-live="polite"></div>
+    <script type="module" src="./js/app.js"></script>
+    <script type="module" src="./js/diagrams.js"></script>
+    <script>
+      /* Additive motion only — the page is fully readable without this. */
+      (function () {
+        var reduceMotion = window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches;
+        if (reduceMotion) return;
+        if (!("IntersectionObserver" in window)) return;
+
+        var targets = document.querySelectorAll(
+          ".arch-page .section-heading, .arch-page .diagram-panel, .arch-page .card, .arch-page .callout, .arch-page .hero-actions",
+        );
+        if (!targets.length) return;
+
+        targets.forEach(function (el, index) {
+          el.classList.add("reveal");
+          el.style.setProperty("--reveal-delay", (index % 4) * 70 + "ms");
+        });
+
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (!entry.isIntersecting) return;
+              entry.target.classList.add("is-visible");
+              observer.unobserve(entry.target);
+            });
+          },
+          { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+        );
+
+        targets.forEach(function (el) {
+          observer.observe(el);
+        });
+      })();
+    </script>
+  </body>
+</html>

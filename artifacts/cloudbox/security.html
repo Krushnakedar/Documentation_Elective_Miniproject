@@ -1,37 +1,1131 @@
 <!doctype html>
-<html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Security lab — CloudBox</title><meta name="description" content="Browser-side file protection workflow interface for the CloudBox educational prototype."><link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./css/style.css"></head>
-<body><a class="skip-link" href="#main">Skip to content</a><header class="site-header"><div class="nav-wrap"><a class="brand" href="./index.html"><span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7.1 18h10.1a4 4 0 0 0 .4-8A5.8 5.8 0 0 0 6.5 8.8 4.6 4.6 0 0 0 7.1 18Z" stroke="currentColor" stroke-width="1.8"/><path d="m9 12.5 3 3 3-3m-3 2.6V9.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>CloudBox <em>/ lab</em></a><nav class="nav-links" data-nav-links aria-label="Main navigation"><a class="nav-link" href="./index.html">Overview</a><a class="nav-link" href="./architecture.html">Architecture</a><a class="nav-link" href="./documentation.html">Documentation</a><a class="nav-link" href="./security.html" aria-current="page">Security lab</a><a class="nav-link" href="./testing.html">Testing</a><a class="nav-link" href="./team.html">Project team</a></nav><div class="nav-tools"><button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch theme" data-testid="toggle-theme"></button><button class="menu-toggle" type="button" data-menu-toggle aria-controls="primary-navigation" aria-expanded="false" aria-label="Open navigation menu" data-testid="toggle-menu"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div></div></header>
-<main id="main"><section class="page-hero"><div class="container"><div class="breadcrumb"><a href="./index.html">CloudBox</a> / Security lab</div><span class="eyebrow">Client-side learning workflow</span><h1>Security lab</h1><p class="lead">Encrypt and reconstruct files locally with AES-256-GCM, then retrieve an encrypted package over HTTPS when a CloudFront object is available. Processing requires a secure browser context.</p></div></section>
-<section class="section"><div class="container">
-  <div class="callout" role="note"><strong>Educational prototype · secure context required</strong><p>Browser cryptography APIs are generally available only on HTTPS or localhost. This interface is not an upload service and does not claim an authenticated API, key recovery, or a security audit.</p></div>
-  <div class="warning-box" role="alert"><strong>Key handling warning</strong>The encryption key is downloaded separately. Anyone with both the encrypted package and its key can decrypt the file. Keep the key private and never upload it to a public website or commit it to Git.</div>
-  <div class="security-grid">
-    <section class="tool-card" aria-labelledby="encrypt-heading">
-      <div class="tool-head"><span class="tool-step">01 / Protect a local file</span><h2 id="encrypt-heading">Encrypt &amp; package</h2><p>Choose a source file and block size. Encryption and package creation happen in this browser; no file is uploaded.</p></div>
-      <form class="tool-body" id="encryptForm" data-testid="form-encrypt" novalidate>
-        <div class="field"><label for="sourceFile">Source file</label><input class="file-input" id="sourceFile" name="sourceFile" type="file" data-testid="input-source-file"><small>The selected file remains local to this browser workflow until you choose where to save its output.</small></div>
-        <div class="field"><label for="blockSize">Block size</label><select class="select" id="blockSize" name="blockSize" data-testid="select-block-size"><option value="262144">256 KiB</option><option value="524288">512 KiB</option><option value="1048576" selected>1 MiB · recommended default</option><option value="2097152">2 MiB</option><option value="4194304">4 MiB</option></select><small>Maximum input: 100 MiB. Smaller blocks can reduce peak memory but add per-block metadata.</small></div>
-        <div class="status-box" id="blockCount" role="status" aria-live="polite" data-testid="status-block-count">Choose a file to estimate its encrypted block count.</div>
-        <div class="form-actions"><button class="button button-primary" id="encryptButton" type="submit" disabled data-testid="button-encrypt">Encrypt selected file</button><span class="inline-meta">AES-256-GCM · educational workflow</span></div>
-        <div class="progress-wrap"><div class="progress-meta"><label for="encryptProgress">Encryption progress</label><span data-testid="text-encrypt-progress">Waiting for a file</span></div><progress id="encryptProgress" max="100" value="0" aria-label="Encryption progress" data-testid="progress-encrypt"></progress></div>
-        <div class="status-box" id="encryptStatus" role="status" aria-live="polite" aria-atomic="true" data-testid="status-encrypt">Ready. No file has been processed.</div>
-        <div class="download-row"><a class="button button-secondary download-link" id="packageDownload" href="#" download hidden data-testid="download-package">Download encrypted package</a><a class="button button-secondary download-link" id="keyDownload" href="#" download hidden data-testid="download-key">Download key separately</a></div>
-      </form>
-    </section>
-    <section class="tool-card" aria-labelledby="decrypt-heading">
-      <div class="tool-head"><span class="tool-step">02 / Restore a local file</span><h2 id="decrypt-heading">Retrieve &amp; decrypt</h2><p>Use a package file or an HTTPS CloudFront object URL, plus the separate key file.</p></div>
-      <form class="tool-body" id="decryptForm" data-testid="form-decrypt" novalidate>
-        <div class="field"><label for="packageFile">Encrypted package</label><input class="file-input" id="packageFile" name="packageFile" type="file" accept=".json,application/json" data-testid="input-package-file"><small>Manual package selection remains available if a remote download fails.</small></div>
-        <div class="field"><label for="cloudfrontUrl">CloudFront HTTPS URL</label><div style="display:flex;gap:8px;flex-wrap:wrap"><input class="input" style="flex:1 1 210px" id="cloudfrontUrl" name="cloudfrontUrl" type="url" inputmode="url" placeholder="Paste your configured HTTPS object URL" autocomplete="url" data-testid="input-cloudfront-url"><button class="button button-secondary" id="fetchPackageButton" type="button" disabled data-testid="button-fetch-package">Fetch package</button></div><small>Use your configured HTTPS distribution address. No example AWS domain is configured by this project.</small></div>
-        <div class="field"><label for="keyFile">Separate encryption key</label><input class="file-input" id="keyFile" name="keyFile" type="file" data-testid="input-key-file"><small>Choose the key file that corresponds to this package. Never share it alongside a public package link.</small></div>
-        <div class="form-actions"><button class="button button-primary" id="decryptButton" type="submit" disabled data-testid="button-decrypt">Decrypt &amp; reconstruct</button></div>
-        <div class="progress-wrap"><div class="progress-meta"><label for="decryptProgress">Reconstruction progress</label><span data-testid="text-decrypt-progress">Waiting for package and key</span></div><progress id="decryptProgress" max="100" value="0" aria-label="Decryption and reconstruction progress" data-testid="progress-decrypt"></progress></div>
-        <div class="status-box" id="decryptStatus" role="status" aria-live="polite" aria-atomic="true" data-testid="status-decrypt">Select an encrypted package and its matching key.</div>
-        <p class="inline-meta" id="reconstructedMeta" data-testid="text-reconstructed-meta">No reconstructed file is available.</p>
-        <div class="download-row"><a class="button button-secondary download-link" id="outputDownload" href="#" download hidden data-testid="download-output">Download reconstructed file</a></div>
-      </form>
-    </section>
-  </div>
-</div></section>
-<section class="section section-alt"><div class="container"><div class="section-heading"><div><span class="eyebrow">Use this carefully</span><h2>Encryption protects content, not every risk.</h2></div></div><div class="grid-3"><article class="card"><h3>Keep key and package separate</h3><p>A public package link plus a publicly available key defeats file confidentiality. Share keys through an appropriate separate channel.</p></article><article class="card"><h3>Authentication failures matter</h3><p>If any GCM tag check fails, treat the package as invalid. Do not ignore a failed block or offer partial plaintext as a completed result.</p></article><article class="card"><h3>Browser endpoint still matters</h3><p>Malware, compromised extensions, shared devices, and memory exposure can undermine client-side protections.</p></article></div></div></section></main>
- <footer class="footer"><div class="container footer-inner"><div><div class="footer-brand">CloudBox <span class="muted">/ secure file lab</span></div><p>No upload API is present. Configure any storage and delivery infrastructure independently.</p></div><nav class="footer-links" aria-label="Footer navigation"><a href="./index.html">Overview</a><a href="./architecture.html">Architecture</a><a href="./documentation.html">Documentation</a><a href="./team.html">Team</a><a href="./testing.html">Testing</a></nav><span class="inline-meta">© <span data-year></span> CloudBox</span></div></footer><div class="toast-region" data-toast-region aria-live="polite"></div><script type="module" src="./js/app.js"></script><script type="module" src="./js/security.js"></script></body></html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Security lab — CloudBox</title>
+    <meta
+      name="description"
+      content="Browser-side file protection workflow interface for the CloudBox educational prototype."
+    />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <style>
+      /* ============================================================
+     Security lab — UI polish & motion (additive only).
+     Every rule is scoped to .security-page so other pages keep
+     their existing look. Colours derive from currentColor and
+     theme accent tokens, so light and dark themes both work.
+     No form IDs, names, data-testid, hidden or disabled states
+     are altered — security.js wiring stays intact.
+     ============================================================ */
+      .security-page {
+        --sec-acc: var(--accent, #6ea8fe);
+        --sec-acc-2: var(--accent-2, #a78bfa);
+        --sec-warn: var(--warning, #f0b429);
+        --sec-line: color-mix(in srgb, currentColor 14%, transparent);
+        --sec-glow: color-mix(in srgb, var(--sec-acc) 42%, transparent);
+        --sec-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+
+      /* ------------------------------------------------------------
+     1. HERO — ambient grid, drifting glow, staggered entrance
+     ------------------------------------------------------------ */
+      .security-page .page-hero {
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+      }
+      .security-page .page-hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(var(--sec-line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--sec-line) 1px, transparent 1px);
+        background-size: 56px 56px;
+        opacity: 0.26;
+        -webkit-mask-image: radial-gradient(
+          ellipse 78% 66% at 50% 0%,
+          #000 0%,
+          transparent 72%
+        );
+        mask-image: radial-gradient(
+          ellipse 78% 66% at 50% 0%,
+          #000 0%,
+          transparent 72%
+        );
+        animation: sec-grid 30s linear infinite;
+      }
+      .security-page .page-hero::after {
+        content: "";
+        position: absolute;
+        inset: -30% -10%;
+        z-index: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(
+            circle at 16% 24%,
+            color-mix(in srgb, var(--sec-acc) 34%, transparent),
+            transparent 42%
+          ),
+          radial-gradient(
+            circle at 84% 8%,
+            color-mix(in srgb, var(--sec-acc-2) 30%, transparent),
+            transparent 44%
+          );
+        filter: blur(72px);
+        opacity: 0.55;
+        animation: sec-drift 20s ease-in-out infinite alternate;
+      }
+      .security-page .page-hero .container {
+        position: relative;
+        z-index: 1;
+      }
+
+      .security-page .page-hero .breadcrumb,
+      .security-page .page-hero .eyebrow,
+      .security-page .page-hero h1,
+      .security-page .page-hero .lead {
+        animation: sec-fade-up 0.85s var(--sec-ease) both;
+      }
+      .security-page .page-hero .breadcrumb {
+        animation-delay: 0.05s;
+      }
+      .security-page .page-hero .eyebrow {
+        animation-delay: 0.16s;
+      }
+      .security-page .page-hero h1 {
+        animation-delay: 0.26s;
+      }
+      .security-page .page-hero .lead {
+        animation-delay: 0.38s;
+      }
+
+      /* Gradient headline with slow shimmer */
+      .security-page .page-hero h1 {
+        background: linear-gradient(
+          100deg,
+          currentColor 0%,
+          currentColor 40%,
+          var(--sec-acc) 60%,
+          var(--sec-acc-2) 80%,
+          currentColor 100%
+        );
+        background-size: 240% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation:
+          sec-fade-up 0.85s var(--sec-ease) 0.26s both,
+          sec-shimmer 9s ease-in-out 1.1s infinite;
+      }
+      @supports not (
+        (-webkit-background-clip: text) or (background-clip: text)
+      ) {
+        .security-page .page-hero h1 {
+          background: none;
+          -webkit-text-fill-color: currentColor;
+        }
+      }
+
+      /* Live indicator dot inside eyebrows */
+      .security-page .page-hero .eyebrow,
+      .security-page .section-heading .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+      }
+      .security-page .page-hero .eyebrow::before,
+      .security-page .section-heading .eyebrow::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        flex: none;
+        border-radius: 50%;
+        background: var(--sec-acc);
+        box-shadow: 0 0 0 0 var(--sec-glow);
+        animation: sec-ping 2.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+      }
+
+      /* ------------------------------------------------------------
+     2. SECTION HEADINGS — animated gradient rule
+     ------------------------------------------------------------ */
+      .security-page .section-heading h2 {
+        position: relative;
+        padding-bottom: 0.5rem;
+      }
+      .security-page .section-heading h2::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 54px;
+        height: 3px;
+        border-radius: 99px;
+        background: linear-gradient(90deg, var(--sec-acc), var(--sec-acc-2));
+        transform-origin: left center;
+        animation: sec-rule 1s var(--sec-ease) both;
+      }
+
+      /* ------------------------------------------------------------
+     3. CALLOUT — travelling bar + sheen + hover lift
+     ------------------------------------------------------------ */
+      .security-page .callout {
+        position: relative;
+        overflow: hidden;
+        transition:
+          transform 0.4s var(--sec-ease),
+          box-shadow 0.4s var(--sec-ease);
+      }
+      .security-page .callout:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 20px 44px -30px
+          color-mix(in srgb, currentColor 70%, transparent);
+      }
+      .security-page .callout::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: linear-gradient(
+          180deg,
+          var(--sec-acc),
+          var(--sec-acc-2),
+          var(--sec-acc)
+        );
+        background-size: 100% 220%;
+        animation: sec-slide 6s linear infinite;
+      }
+      .security-page .callout::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(
+          100deg,
+          transparent 32%,
+          color-mix(in srgb, var(--sec-acc) 11%, transparent) 50%,
+          transparent 68%
+        );
+        transform: translateX(-110%);
+        animation: sec-sheen 8.5s ease-in-out infinite;
+      }
+
+      /* ------------------------------------------------------------
+     4. WARNING BOX — warm accent bar with a slow pulse
+     ------------------------------------------------------------ */
+      .security-page .warning-box {
+        position: relative;
+        overflow: hidden;
+        transition:
+          transform 0.4s var(--sec-ease),
+          box-shadow 0.4s var(--sec-ease);
+      }
+      .security-page .warning-box:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 18px 40px -30px
+          color-mix(in srgb, var(--sec-warn) 70%, transparent);
+      }
+      .security-page .warning-box::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        border-radius: 2px;
+        background: linear-gradient(
+          180deg,
+          color-mix(in srgb, var(--sec-warn) 70%, transparent),
+          var(--sec-warn),
+          color-mix(in srgb, var(--sec-warn) 70%, transparent)
+        );
+        background-size: 100% 220%;
+        animation: sec-slide 5s linear infinite;
+      }
+      .security-page .warning-box::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          420px circle at 0% 50%,
+          color-mix(in srgb, var(--sec-warn) 16%, transparent),
+          transparent 62%
+        );
+        opacity: 0.6;
+        animation: sec-warn-pulse 4.5s ease-in-out infinite;
+      }
+
+      /* ------------------------------------------------------------
+     5. TOOL CARDS — lift, gradient top line, focus-within glow
+     ------------------------------------------------------------ */
+      .security-page .tool-card {
+        position: relative;
+        transition:
+          transform 0.5s var(--sec-ease),
+          box-shadow 0.5s var(--sec-ease),
+          border-color 0.5s var(--sec-ease);
+      }
+      .security-page .tool-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 18px;
+        right: 18px;
+        height: 2px;
+        border-radius: 2px;
+        pointer-events: none;
+        background: linear-gradient(90deg, var(--sec-acc), var(--sec-acc-2));
+        transform: scaleX(0);
+        transform-origin: left center;
+        transition: transform 0.55s var(--sec-ease);
+        opacity: 0.9;
+      }
+      .security-page .tool-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 26px 54px -30px
+          color-mix(in srgb, currentColor 70%, transparent);
+        border-color: color-mix(in srgb, var(--sec-acc) 42%, var(--sec-line));
+      }
+      .security-page .tool-card:hover::before,
+      .security-page .tool-card:focus-within::before {
+        transform: scaleX(1);
+      }
+      .security-page .tool-card:focus-within {
+        border-color: color-mix(in srgb, var(--sec-acc) 46%, var(--sec-line));
+        box-shadow: 0 22px 48px -34px var(--sec-glow);
+      }
+
+      /* Step label */
+      .security-page .tool-step {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition:
+          color 0.35s var(--sec-ease),
+          letter-spacing 0.35s var(--sec-ease);
+      }
+      .security-page .tool-step::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        flex: none;
+        border-radius: 50%;
+        background: var(--sec-acc);
+        opacity: 0.65;
+        animation: sec-blink 2.4s ease-in-out infinite;
+      }
+      .security-page .tool-card:hover .tool-step,
+      .security-page .tool-card:focus-within .tool-step {
+        color: var(--sec-acc);
+        letter-spacing: 0.02em;
+      }
+      .security-page .tool-card h2 {
+        transition: color 0.35s var(--sec-ease);
+      }
+      .security-page .tool-card:hover h2,
+      .security-page .tool-card:focus-within h2 {
+        color: var(--sec-acc);
+      }
+
+      /* ------------------------------------------------------------
+     6. FORM FIELDS — focus ring + soft field glow
+     ------------------------------------------------------------ */
+      .security-page .field label {
+        transition: color 0.3s var(--sec-ease);
+      }
+      .security-page .field:focus-within label {
+        color: var(--sec-acc);
+      }
+      .security-page .input,
+      .security-page .select,
+      .security-page .file-input {
+        transition:
+          border-color 0.3s var(--sec-ease),
+          box-shadow 0.3s var(--sec-ease),
+          background-color 0.3s var(--sec-ease);
+      }
+      .security-page .input:hover,
+      .security-page .select:hover,
+      .security-page .file-input:hover {
+        border-color: color-mix(in srgb, var(--sec-acc) 40%, var(--sec-line));
+      }
+      .security-page .input:focus,
+      .security-page .select:focus,
+      .security-page .file-input:focus {
+        border-color: color-mix(in srgb, var(--sec-acc) 60%, var(--sec-line));
+        box-shadow: 0 0 0 3px
+          color-mix(in srgb, var(--sec-acc) 18%, transparent);
+        outline: none;
+      }
+      .security-page .field small {
+        transition: color 0.3s var(--sec-ease);
+      }
+      .security-page .field:focus-within small {
+        color: color-mix(in srgb, currentColor 88%, var(--sec-acc));
+      }
+
+      /* ------------------------------------------------------------
+     7. STATUS BOXES — soft accent tint and lift on hover
+     ------------------------------------------------------------ */
+      .security-page .status-box {
+        position: relative;
+        overflow: hidden;
+        transition:
+          border-color 0.35s var(--sec-ease),
+          background-color 0.35s var(--sec-ease),
+          box-shadow 0.35s var(--sec-ease);
+      }
+      .security-page .status-box:hover {
+        border-color: color-mix(in srgb, var(--sec-acc) 38%, var(--sec-line));
+        box-shadow: 0 12px 26px -22px var(--sec-glow);
+      }
+
+      /* ------------------------------------------------------------
+     8. PROGRESS BARS — animated gradient fill
+     ------------------------------------------------------------ */
+      .security-page progress {
+        transition: box-shadow 0.35s var(--sec-ease);
+      }
+      .security-page progress:not([value="0"]):not([value]) {
+        box-shadow: 0 0 0 1px
+          color-mix(in srgb, var(--sec-acc) 22%, transparent);
+      }
+      .security-page progress::-webkit-progress-bar {
+        border-radius: 99px;
+      }
+      .security-page progress::-webkit-progress-value {
+        border-radius: 99px;
+        background-image: linear-gradient(
+          110deg,
+          var(--sec-acc) 0%,
+          var(--sec-acc-2) 40%,
+          var(--sec-acc) 70%,
+          var(--sec-acc-2) 100%
+        );
+        background-size: 220% 100%;
+        animation: sec-progress 3.2s linear infinite;
+        transition: width 0.35s var(--sec-ease);
+      }
+      .security-page progress::-moz-progress-bar {
+        border-radius: 99px;
+        background-image: linear-gradient(
+          110deg,
+          var(--sec-acc) 0%,
+          var(--sec-acc-2) 40%,
+          var(--sec-acc) 70%,
+          var(--sec-acc-2) 100%
+        );
+        background-size: 220% 100%;
+        animation: sec-progress 3.2s linear infinite;
+      }
+
+      /* ------------------------------------------------------------
+     9. BUTTONS — lift + shimmer sweep
+     ------------------------------------------------------------ */
+      .security-page .button {
+        position: relative;
+        overflow: hidden;
+        transition:
+          transform 0.3s var(--sec-ease),
+          box-shadow 0.3s var(--sec-ease),
+          border-color 0.3s var(--sec-ease),
+          color 0.3s var(--sec-ease),
+          opacity 0.3s var(--sec-ease);
+      }
+      .security-page .button:not(:disabled):hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 26px -16px var(--sec-glow);
+      }
+      .security-page .button:not(:disabled)::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(
+          100deg,
+          transparent 25%,
+          rgba(255, 255, 255, 0.22) 50%,
+          transparent 75%
+        );
+        transform: translateX(-130%);
+        transition: transform 0.75s var(--sec-ease);
+      }
+      .security-page .button:not(:disabled):hover::after {
+        transform: translateX(130%);
+      }
+      .security-page .button:disabled {
+        cursor: not-allowed;
+      }
+
+      /* Download links — gentle entrance when they become visible */
+      .security-page .download-link:not([hidden]) {
+        animation: sec-pop 0.45s var(--sec-ease) both;
+      }
+
+      /* ------------------------------------------------------------
+     10. BOTTOM CARDS — hover lift + accent heading
+     ------------------------------------------------------------ */
+      .security-page .section-alt .card {
+        transition:
+          transform 0.45s var(--sec-ease),
+          box-shadow 0.45s var(--sec-ease),
+          border-color 0.45s var(--sec-ease);
+      }
+      .security-page .section-alt .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 22px 46px -30px
+          color-mix(in srgb, currentColor 70%, transparent);
+        border-color: color-mix(in srgb, var(--sec-acc) 42%, var(--sec-line));
+      }
+      .security-page .section-alt .card h3 {
+        transition: color 0.35s var(--sec-ease);
+      }
+      .security-page .section-alt .card:hover h3 {
+        color: var(--sec-acc);
+      }
+
+      /* ------------------------------------------------------------
+     11. FOCUS VISIBILITY
+     ------------------------------------------------------------ */
+      .security-page a:focus-visible,
+      .security-page button:focus-visible,
+      .security-page input:focus-visible,
+      .security-page select:focus-visible {
+        outline: 2px solid var(--sec-acc);
+        outline-offset: 3px;
+        border-radius: 6px;
+      }
+
+      /* ------------------------------------------------------------
+     12. SCROLL REVEAL (classes added by JS only)
+     ------------------------------------------------------------ */
+      .security-page .sec-reveal {
+        opacity: 0;
+        translate: 0 18px;
+        transition:
+          opacity 0.75s var(--sec-ease),
+          translate 0.75s var(--sec-ease);
+        transition-delay: var(--sec-delay, 0ms);
+      }
+      .security-page .sec-reveal.is-visible {
+        opacity: 1;
+        translate: 0 0;
+      }
+
+      /* ------------------------------------------------------------
+     13. KEYFRAMES
+     ------------------------------------------------------------ */
+      @keyframes sec-fade-up {
+        from {
+          opacity: 0;
+          transform: translateY(14px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @keyframes sec-shimmer {
+        0%,
+        100% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+      }
+      @keyframes sec-grid {
+        to {
+          background-position:
+            56px 56px,
+            56px 56px;
+        }
+      }
+      @keyframes sec-drift {
+        from {
+          transform: translate3d(0, 0, 0) scale(1);
+        }
+        to {
+          transform: translate3d(26px, -20px, 0) scale(1.12);
+        }
+      }
+      @keyframes sec-ping {
+        0% {
+          box-shadow: 0 0 0 0 var(--sec-glow);
+        }
+        70% {
+          box-shadow: 0 0 0 9px transparent;
+        }
+        100% {
+          box-shadow: 0 0 0 0 transparent;
+        }
+      }
+      @keyframes sec-rule {
+        from {
+          transform: scaleX(0);
+        }
+        to {
+          transform: scaleX(1);
+        }
+      }
+      @keyframes sec-slide {
+        to {
+          background-position: 0 -220%;
+        }
+      }
+      @keyframes sec-sheen {
+        0%,
+        55% {
+          transform: translateX(-110%);
+        }
+        100% {
+          transform: translateX(110%);
+        }
+      }
+      @keyframes sec-warn-pulse {
+        0%,
+        100% {
+          opacity: 0.35;
+        }
+        50% {
+          opacity: 0.8;
+        }
+      }
+      @keyframes sec-blink {
+        0%,
+        100% {
+          opacity: 0.35;
+        }
+        50% {
+          opacity: 0.95;
+        }
+      }
+      @keyframes sec-progress {
+        to {
+          background-position: -220% 0;
+        }
+      }
+      @keyframes sec-pop {
+        from {
+          opacity: 0;
+          transform: translateY(6px) scale(0.985);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      /* ------------------------------------------------------------
+     14. REDUCED MOTION
+     ------------------------------------------------------------ */
+      @media (prefers-reduced-motion: reduce) {
+        .security-page .page-hero::before,
+        .security-page .page-hero::after,
+        .security-page .page-hero .breadcrumb,
+        .security-page .page-hero .eyebrow,
+        .security-page .page-hero h1,
+        .security-page .page-hero .lead,
+        .security-page .page-hero .eyebrow::before,
+        .security-page .section-heading .eyebrow::before,
+        .security-page .section-heading h2::after,
+        .security-page .callout::before,
+        .security-page .callout::after,
+        .security-page .warning-box::before,
+        .security-page .warning-box::after,
+        .security-page .tool-step::before,
+        .security-page progress::-webkit-progress-value,
+        .security-page progress::-moz-progress-bar {
+          animation: none !important;
+        }
+        .security-page .download-link:not([hidden]) {
+          animation: none;
+        }
+        .security-page .sec-reveal {
+          opacity: 1;
+          translate: 0 0;
+          transition: none;
+        }
+        .security-page .callout,
+        .security-page .warning-box,
+        .security-page .tool-card,
+        .security-page .tool-card::before,
+        .security-page .tool-step,
+        .security-page .field label,
+        .security-page .field small,
+        .security-page .input,
+        .security-page .select,
+        .security-page .file-input,
+        .security-page .status-box,
+        .security-page .button,
+        .security-page .button::after,
+        .security-page .section-alt .card {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body class="security-page">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="nav-wrap">
+        <a class="brand" href="./index.html"
+          ><span class="brand-mark"
+            ><svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M7.1 18h10.1a4 4 0 0 0 .4-8A5.8 5.8 0 0 0 6.5 8.8 4.6 4.6 0 0 0 7.1 18Z"
+                stroke="currentColor"
+                stroke-width="1.8"
+              />
+              <path
+                d="m9 12.5 3 3 3-3m-3 2.6V9.7"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              /></svg></span
+          >CloudBox <em>/ lab</em></a
+        >
+        <nav class="nav-links" data-nav-links aria-label="Main navigation">
+          <a class="nav-link" href="./index.html">Overview</a
+          ><a class="nav-link" href="./architecture.html">Architecture</a
+          ><a class="nav-link" href="./documentation.html">Documentation</a
+          ><a class="nav-link" href="./security.html" aria-current="page"
+            >Security lab</a
+          ><a class="nav-link" href="./testing.html">Testing</a
+          ><a class="nav-link" href="./team.html">Project team</a>
+        </nav>
+        <div class="nav-tools">
+          <button
+            class="theme-toggle"
+            type="button"
+            data-theme-toggle
+            aria-label="Switch theme"
+            data-testid="toggle-theme"
+          ></button
+          ><button
+            class="menu-toggle"
+            type="button"
+            data-menu-toggle
+            aria-controls="primary-navigation"
+            aria-expanded="false"
+            aria-label="Open navigation menu"
+            data-testid="toggle-menu"
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M4 7h16M4 12h16M4 17h16"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+    <main id="main">
+      <section class="page-hero">
+        <div class="container">
+          <div class="breadcrumb">
+            <a href="./index.html">CloudBox</a> / Security lab
+          </div>
+          <span class="eyebrow">Client-side learning workflow</span>
+          <h1>Security lab</h1>
+          <p class="lead">
+            Encrypt and reconstruct files locally with AES-256-GCM, then
+            retrieve an encrypted package over HTTPS when a CloudFront object is
+            available. Processing requires a secure browser context.
+          </p>
+        </div>
+      </section>
+      <section class="section">
+        <div class="container">
+          <div class="callout" role="note">
+            <strong>Educational prototype · secure context required</strong>
+            <p>
+              Browser cryptography APIs are generally available only on HTTPS or
+              localhost. This interface is not an upload service and does not
+              claim an authenticated API, key recovery, or a security audit.
+            </p>
+          </div>
+          <div class="warning-box" role="alert">
+            <strong>Key handling warning</strong>The encryption key is
+            downloaded separately. Anyone with both the encrypted package and
+            its key can decrypt the file. Keep the key private and never upload
+            it to a public website or commit it to Git.
+          </div>
+          <div class="security-grid">
+            <section class="tool-card" aria-labelledby="encrypt-heading">
+              <div class="tool-head">
+                <span class="tool-step">01 / Protect a local file</span>
+                <h2 id="encrypt-heading">Encrypt &amp; package</h2>
+                <p>
+                  Choose a source file and block size. Encryption and package
+                  creation happen in this browser; no file is uploaded.
+                </p>
+              </div>
+              <form
+                class="tool-body"
+                id="encryptForm"
+                data-testid="form-encrypt"
+                novalidate
+              >
+                <div class="field">
+                  <label for="sourceFile">Source file</label
+                  ><input
+                    class="file-input"
+                    id="sourceFile"
+                    name="sourceFile"
+                    type="file"
+                    data-testid="input-source-file"
+                  /><small
+                    >The selected file remains local to this browser workflow
+                    until you choose where to save its output.</small
+                  >
+                </div>
+                <div class="field">
+                  <label for="blockSize">Block size</label
+                  ><select
+                    class="select"
+                    id="blockSize"
+                    name="blockSize"
+                    data-testid="select-block-size"
+                  >
+                    <option value="262144">256 KiB</option>
+                    <option value="524288">512 KiB</option>
+                    <option value="1048576" selected>
+                      1 MiB · recommended default
+                    </option>
+                    <option value="2097152">2 MiB</option>
+                    <option value="4194304">4 MiB</option></select
+                  ><small
+                    >Maximum input: 100 MiB. Smaller blocks can reduce peak
+                    memory but add per-block metadata.</small
+                  >
+                </div>
+                <div
+                  class="status-box"
+                  id="blockCount"
+                  role="status"
+                  aria-live="polite"
+                  data-testid="status-block-count"
+                >
+                  Choose a file to estimate its encrypted block count.
+                </div>
+                <div class="form-actions">
+                  <button
+                    class="button button-primary"
+                    id="encryptButton"
+                    type="submit"
+                    disabled
+                    data-testid="button-encrypt"
+                  >
+                    Encrypt selected file</button
+                  ><span class="inline-meta"
+                    >AES-256-GCM · educational workflow</span
+                  >
+                </div>
+                <div class="progress-wrap">
+                  <div class="progress-meta">
+                    <label for="encryptProgress">Encryption progress</label
+                    ><span data-testid="text-encrypt-progress"
+                      >Waiting for a file</span
+                    >
+                  </div>
+                  <progress
+                    id="encryptProgress"
+                    max="100"
+                    value="0"
+                    aria-label="Encryption progress"
+                    data-testid="progress-encrypt"
+                  ></progress>
+                </div>
+                <div
+                  class="status-box"
+                  id="encryptStatus"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                  data-testid="status-encrypt"
+                >
+                  Ready. No file has been processed.
+                </div>
+                <div class="download-row">
+                  <a
+                    class="button button-secondary download-link"
+                    id="packageDownload"
+                    href="#"
+                    download
+                    hidden
+                    data-testid="download-package"
+                    >Download encrypted package</a
+                  ><a
+                    class="button button-secondary download-link"
+                    id="keyDownload"
+                    href="#"
+                    download
+                    hidden
+                    data-testid="download-key"
+                    >Download key separately</a
+                  >
+                </div>
+              </form>
+            </section>
+            <section class="tool-card" aria-labelledby="decrypt-heading">
+              <div class="tool-head">
+                <span class="tool-step">02 / Restore a local file</span>
+                <h2 id="decrypt-heading">Retrieve &amp; decrypt</h2>
+                <p>
+                  Use a package file or an HTTPS CloudFront object URL, plus the
+                  separate key file.
+                </p>
+              </div>
+              <form
+                class="tool-body"
+                id="decryptForm"
+                data-testid="form-decrypt"
+                novalidate
+              >
+                <div class="field">
+                  <label for="packageFile">Encrypted package</label
+                  ><input
+                    class="file-input"
+                    id="packageFile"
+                    name="packageFile"
+                    type="file"
+                    accept=".json,application/json"
+                    data-testid="input-package-file"
+                  /><small
+                    >Manual package selection remains available if a remote
+                    download fails.</small
+                  >
+                </div>
+                <div class="field">
+                  <label for="cloudfrontUrl">CloudFront HTTPS URL</label>
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap">
+                    <input
+                      class="input"
+                      style="flex: 1 1 210px"
+                      id="cloudfrontUrl"
+                      name="cloudfrontUrl"
+                      type="url"
+                      inputmode="url"
+                      placeholder="Paste your configured HTTPS object URL"
+                      autocomplete="url"
+                      data-testid="input-cloudfront-url"
+                    /><button
+                      class="button button-secondary"
+                      id="fetchPackageButton"
+                      type="button"
+                      disabled
+                      data-testid="button-fetch-package"
+                    >
+                      Fetch package
+                    </button>
+                  </div>
+                  <small
+                    >Use your configured HTTPS distribution address. No example
+                    AWS domain is configured by this project.</small
+                  >
+                </div>
+                <div class="field">
+                  <label for="keyFile">Separate encryption key</label
+                  ><input
+                    class="file-input"
+                    id="keyFile"
+                    name="keyFile"
+                    type="file"
+                    data-testid="input-key-file"
+                  /><small
+                    >Choose the key file that corresponds to this package. Never
+                    share it alongside a public package link.</small
+                  >
+                </div>
+                <div class="form-actions">
+                  <button
+                    class="button button-primary"
+                    id="decryptButton"
+                    type="submit"
+                    disabled
+                    data-testid="button-decrypt"
+                  >
+                    Decrypt &amp; reconstruct
+                  </button>
+                </div>
+                <div class="progress-wrap">
+                  <div class="progress-meta">
+                    <label for="decryptProgress">Reconstruction progress</label
+                    ><span data-testid="text-decrypt-progress"
+                      >Waiting for package and key</span
+                    >
+                  </div>
+                  <progress
+                    id="decryptProgress"
+                    max="100"
+                    value="0"
+                    aria-label="Decryption and reconstruction progress"
+                    data-testid="progress-decrypt"
+                  ></progress>
+                </div>
+                <div
+                  class="status-box"
+                  id="decryptStatus"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                  data-testid="status-decrypt"
+                >
+                  Select an encrypted package and its matching key.
+                </div>
+                <p
+                  class="inline-meta"
+                  id="reconstructedMeta"
+                  data-testid="text-reconstructed-meta"
+                >
+                  No reconstructed file is available.
+                </p>
+                <div class="download-row">
+                  <a
+                    class="button button-secondary download-link"
+                    id="outputDownload"
+                    href="#"
+                    download
+                    hidden
+                    data-testid="download-output"
+                    >Download reconstructed file</a
+                  >
+                </div>
+              </form>
+            </section>
+          </div>
+        </div>
+      </section>
+      <section class="section section-alt">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">Use this carefully</span>
+              <h2>Encryption protects content, not every risk.</h2>
+            </div>
+          </div>
+          <div class="grid-3">
+            <article class="card">
+              <h3>Keep key and package separate</h3>
+              <p>
+                A public package link plus a publicly available key defeats file
+                confidentiality. Share keys through an appropriate separate
+                channel.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Authentication failures matter</h3>
+              <p>
+                If any GCM tag check fails, treat the package as invalid. Do not
+                ignore a failed block or offer partial plaintext as a completed
+                result.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Browser endpoint still matters</h3>
+              <p>
+                Malware, compromised extensions, shared devices, and memory
+                exposure can undermine client-side protections.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="footer">
+      <div class="container footer-inner">
+        <div>
+          <div class="footer-brand">
+            CloudBox <span class="muted">/ secure file lab</span>
+          </div>
+          <p>
+            No upload API is present. Configure any storage and delivery
+            infrastructure independently.
+          </p>
+        </div>
+        <nav class="footer-links" aria-label="Footer navigation">
+          <a href="./index.html">Overview</a
+          ><a href="./architecture.html">Architecture</a
+          ><a href="./documentation.html">Documentation</a
+          ><a href="./team.html">Team</a><a href="./testing.html">Testing</a>
+        </nav>
+        <span class="inline-meta">© <span data-year></span> CloudBox</span>
+      </div>
+    </footer>
+    <div class="toast-region" data-toast-region aria-live="polite"></div>
+    <script type="module" src="./js/app.js"></script>
+    <script type="module" src="./js/security.js"></script>
+    <script>
+      /* Additive scroll reveal only. Page is fully readable without this script.
+     The tool cards contain the encrypt/decrypt forms, so we only add
+     reveal classes to stable containers and never touch form controls. */
+      (function () {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+          return;
+        if (!("IntersectionObserver" in window)) return;
+
+        var targets = [];
+        document
+          .querySelectorAll(
+            ".security-page .callout, .security-page .warning-box, .security-page .tool-card, .security-page .section-heading, .security-page .section-alt .card",
+          )
+          .forEach(function (el, i) {
+            el.classList.add("sec-reveal");
+            el.style.setProperty("--sec-delay", Math.min(i * 90, 400) + "ms");
+            targets.push(el);
+          });
+
+        if (!targets.length) return;
+
+        function settle(el) {
+          el.classList.remove("sec-reveal", "is-visible");
+          el.style.removeProperty("--sec-delay");
+        }
+
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (!entry.isIntersecting) return;
+              var el = entry.target;
+              el.classList.add("is-visible");
+              observer.unobserve(el);
+
+              var done = function (event) {
+                if (event.target !== el) return;
+                if (
+                  event.propertyName !== "translate" &&
+                  event.propertyName !== "opacity"
+                ) {
+                  return;
+                }
+                el.removeEventListener("transitionend", done);
+                settle(el);
+              };
+              el.addEventListener("transitionend", done);
+              setTimeout(function () {
+                settle(el);
+              }, 1800);
+            });
+          },
+          { threshold: 0.1, rootMargin: "0px 0px -40px 0px" },
+        );
+
+        targets.forEach(function (el) {
+          observer.observe(el);
+        });
+      })();
+    </script>
+  </body>
+</html>

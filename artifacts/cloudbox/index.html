@@ -1,98 +1,1116 @@
 <!doctype html>
 <html lang="en" data-theme="dark">
-<head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CloudBox — Secure Storage. Faster Delivery.</title>
-  <meta name="description" content="An educational file-security lab showing how segmentation, AES-256-GCM, private S3, and CloudFront fit together.">
-  <meta name="theme-color" content="#07111f"><meta property="og:title" content="CloudBox — Secure Storage. Faster Delivery.">
-  <meta property="og:description" content="A practical security lab for encrypted file storage and content delivery.">
-  <link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./css/style.css">
-</head>
-<body>
-  <a class="skip-link" href="#main">Skip to content</a>
-  <header class="site-header"><div class="nav-wrap">
-    <a class="brand" href="./index.html" aria-label="CloudBox home"><span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7.1 18h10.1a4 4 0 0 0 .4-8A5.8 5.8 0 0 0 6.5 8.8 4.6 4.6 0 0 0 7.1 18Z" stroke="currentColor" stroke-width="1.8"/><path d="m9 12.5 3 3 3-3m-3 2.6V9.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>CloudBox <em>/ lab</em></a>
-    <nav class="nav-links" id="primary-navigation" data-nav-links aria-label="Main navigation">
-      <a class="nav-link" href="./index.html" aria-current="page" data-testid="link-home">Overview</a>
-      <a class="nav-link" href="./architecture.html" data-testid="link-architecture">Architecture</a>
-      <a class="nav-link" href="./documentation.html" data-testid="link-documentation">Documentation</a>
-      <a class="nav-link" href="./security.html" data-testid="link-security">Security lab</a>
-      <a class="nav-link" href="./testing.html" data-testid="link-testing">Testing</a>
-      <a class="nav-link" href="./team.html" data-testid="link-team">Project team</a>
-    </nav>
-    <div class="nav-tools"><button class="theme-toggle" type="button" data-theme-toggle data-testid="toggle-theme" aria-label="Switch theme"></button><button class="menu-toggle" type="button" data-menu-toggle aria-controls="primary-navigation" aria-expanded="false" aria-label="Open navigation menu" data-testid="toggle-menu"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
-  </div></header>
-  <main id="main">
-    <section class="hero"><div class="container hero-grid">
-      <div class="reveal"><span class="eyebrow">A file security learning lab</span><h1>Secure Storage.<br><span>Faster Delivery.</span></h1>
-        <p class="lead">CloudBox is a practical walkthrough of how browser-side file segmentation and AES-GCM can pair with private object storage and a global content-delivery edge.</p>
-        <div class="hero-actions"><a class="button button-primary" href="./architecture.html">Explore the architecture <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a><a class="button button-secondary" href="./security.html">Open security lab</a></div>
-        <div class="hero-note"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>An educational prototype for a third-year computer engineering project. No upload service or AWS account is silently assumed.</span></div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CloudBox — Secure Storage. Faster Delivery.</title>
+    <meta
+      name="description"
+      content="An educational file-security lab showing how segmentation, AES-256-GCM, private S3, and CloudFront fit together."
+    />
+    <meta name="theme-color" content="#07111f" />
+    <meta
+      property="og:title"
+      content="CloudBox — Secure Storage. Faster Delivery."
+    />
+    <meta
+      property="og:description"
+      content="A practical security lab for encrypted file storage and content delivery."
+    />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <style>
+      /* ============================================================
+       CloudBox home — UI polish & motion (additive, scoped to .home-page)
+       Nothing here changes content; every rule is prefixed so other
+       pages are completely unaffected. Colours are derived from
+       currentColor and theme accent tokens, so both light and dark
+       themes are supported automatically.
+       ============================================================ */
+      .home-page {
+        --hp-acc: var(--accent, #6ea8fe);
+        --hp-acc-2: var(--accent-2, #a78bfa);
+        --hp-line: color-mix(in srgb, currentColor 14%, transparent);
+        --hp-glow: color-mix(in srgb, var(--hp-acc) 42%, transparent);
+        --hp-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+
+      /* ---------- Hero: ambient grid + drifting glow ---------- */
+      .home-page .hero {
+        position: relative;
+        isolation: isolate;
+        overflow: hidden;
+      }
+      .home-page .hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(var(--hp-line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--hp-line) 1px, transparent 1px);
+        background-size: 58px 58px;
+        opacity: 0.22;
+        -webkit-mask-image: radial-gradient(
+          ellipse 82% 70% at 50% 0%,
+          #000 0%,
+          transparent 74%
+        );
+        mask-image: radial-gradient(
+          ellipse 82% 70% at 50% 0%,
+          #000 0%,
+          transparent 74%
+        );
+        animation: hp-grid 34s linear infinite;
+      }
+      .home-page .hero::after {
+        content: "";
+        position: absolute;
+        inset: -25% -12%;
+        z-index: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(
+            circle at 14% 22%,
+            color-mix(in srgb, var(--hp-acc) 34%, transparent),
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at 86% 10%,
+            color-mix(in srgb, var(--hp-acc-2) 30%, transparent),
+            transparent 42%
+          );
+        filter: blur(70px);
+        opacity: 0.6;
+        animation: hp-drift 22s ease-in-out infinite alternate;
+      }
+      .home-page .hero .container {
+        position: relative;
+        z-index: 1;
+      }
+
+      /* ---------- Hero text: staggered entrance ---------- */
+      .home-page .hero .eyebrow,
+      .home-page .hero h1,
+      .home-page .hero .lead,
+      .home-page .hero .hero-actions,
+      .home-page .hero .hero-note {
+        animation: hp-fade-up 0.8s var(--hp-ease) both;
+      }
+      .home-page .hero .eyebrow {
+        animation-delay: 0.05s;
+      }
+      .home-page .hero h1 {
+        animation-delay: 0.15s;
+      }
+      .home-page .hero .lead {
+        animation-delay: 0.28s;
+      }
+      .home-page .hero .hero-actions {
+        animation-delay: 0.4s;
+      }
+      .home-page .hero .hero-note {
+        animation-delay: 0.52s;
+      }
+
+      /* Gradient headline with a slow shimmer */
+      .home-page .hero h1 span {
+        background: linear-gradient(
+          100deg,
+          var(--hp-acc),
+          var(--hp-acc-2),
+          var(--hp-acc)
+        );
+        background-size: 220% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        color: transparent;
+        animation: hp-shift 9s ease-in-out infinite;
+      }
+      @supports not (
+        (-webkit-background-clip: text) or (background-clip: text)
+      ) {
+        .home-page .hero h1 span {
+          -webkit-text-fill-color: currentColor;
+          color: var(--hp-acc);
+          background: none;
+        }
+      }
+
+      /* ---------- Hero console: processing wave + blinking dots ---------- */
+      .home-page .segment-list .segment {
+        animation: hp-seg 3s ease-in-out infinite;
+        transform-origin: center;
+      }
+      .home-page .segment-list .segment:nth-child(1) {
+        animation-delay: 0s;
+      }
+      .home-page .segment-list .segment:nth-child(2) {
+        animation-delay: 0.14s;
+      }
+      .home-page .segment-list .segment:nth-child(3) {
+        animation-delay: 0.28s;
+      }
+      .home-page .segment-list .segment:nth-child(4) {
+        animation-delay: 0.42s;
+      }
+      .home-page .segment-list .segment:nth-child(5) {
+        animation-delay: 0.56s;
+      }
+      .home-page .segment-list .segment:nth-child(6) {
+        animation-delay: 0.7s;
+      }
+      .home-page .segment-list .segment:nth-child(7) {
+        animation-delay: 0.84s;
+      }
+
+      .home-page .console-indicators i {
+        animation: hp-blink 2.2s ease-in-out infinite;
+      }
+      .home-page .console-indicators i:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+      .home-page .console-indicators i:nth-child(3) {
+        animation-delay: 0.6s;
+      }
+
+      .home-page .hero-caption {
+        animation: hp-caption 4.5s ease-in-out infinite;
+      }
+
+      /* ---------- Section headings: animated accent rule ---------- */
+      .home-page .section-heading h2 {
+        position: relative;
+        padding-bottom: 0.5rem;
+      }
+      .home-page .section-heading h2::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 54px;
+        height: 3px;
+        border-radius: 99px;
+        background: linear-gradient(90deg, var(--hp-acc), var(--hp-acc-2));
+        transform-origin: left center;
+        animation: hp-rule 1s var(--hp-ease) both;
+      }
+
+      /* ---------- Status strip ---------- */
+      .home-page .status-item {
+        border-radius: 12px;
+        transition:
+          transform 0.4s var(--hp-ease),
+          background-color 0.4s var(--hp-ease);
+      }
+      .home-page .status-item:hover {
+        transform: translateY(-3px);
+        background: color-mix(in srgb, var(--hp-acc) 7%, transparent);
+      }
+
+      /* ---------- Cards ---------- */
+      .home-page .card {
+        transition:
+          transform 0.45s var(--hp-ease),
+          box-shadow 0.45s var(--hp-ease),
+          border-color 0.45s var(--hp-ease);
+      }
+      .home-page .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 24px 50px -30px
+          color-mix(in srgb, currentColor 70%, transparent);
+        border-color: color-mix(in srgb, var(--hp-acc) 42%, var(--hp-line));
+      }
+      .home-page .card h3 {
+        transition: color 0.35s var(--hp-ease);
+      }
+      .home-page .card:hover h3 {
+        color: var(--hp-acc);
+      }
+      .home-page .card-icon {
+        transition:
+          transform 0.45s var(--hp-ease),
+          background-color 0.45s var(--hp-ease);
+      }
+      .home-page .card:hover .card-icon {
+        transform: translateY(-2px) scale(1.06);
+      }
+
+      /* ---------- Diagram panel ---------- */
+      .home-page .diagram-panel {
+        position: relative;
+        overflow: hidden;
+        transition:
+          transform 0.5s var(--hp-ease),
+          box-shadow 0.5s var(--hp-ease);
+      }
+      .home-page .diagram-panel::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          560px circle at 10% -10%,
+          color-mix(in srgb, var(--hp-acc) 16%, transparent),
+          transparent 60%
+        );
+        opacity: 0;
+        transition: opacity 0.5s var(--hp-ease);
+      }
+      .home-page .diagram-panel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 26px 60px -32px var(--hp-glow);
+      }
+      .home-page .diagram-panel:hover::before {
+        opacity: 1;
+      }
+      .home-page .diagram-node {
+        transition:
+          transform 0.4s var(--hp-ease),
+          box-shadow 0.4s var(--hp-ease),
+          border-color 0.4s var(--hp-ease);
+      }
+      .home-page .diagram-node:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 34px -22px
+          color-mix(in srgb, currentColor 70%, transparent);
+      }
+      .home-page .diagram-node strong {
+        transition: color 0.35s var(--hp-ease);
+      }
+      .home-page .diagram-node:hover strong {
+        color: var(--hp-acc);
+      }
+      .home-page .diagram-arrow {
+        animation: hp-arrow 2.4s ease-in-out infinite;
+      }
+
+      /* ---------- Workflow ---------- */
+      .home-page .workflow-step {
+        border-radius: 14px;
+        transition:
+          transform 0.4s var(--hp-ease),
+          background-color 0.4s var(--hp-ease);
+      }
+      .home-page .workflow-step:hover {
+        transform: translateY(-4px);
+        background: color-mix(in srgb, var(--hp-acc) 6%, transparent);
+      }
+      .home-page .workflow-step .step-number {
+        transition:
+          transform 0.4s var(--hp-ease),
+          box-shadow 0.4s var(--hp-ease);
+      }
+      .home-page .workflow-step:hover .step-number {
+        transform: scale(1.08);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--hp-acc) 14%, transparent);
+      }
+
+      /* ---------- Callouts ---------- */
+      .home-page .callout {
+        position: relative;
+        transition:
+          transform 0.4s var(--hp-ease),
+          box-shadow 0.4s var(--hp-ease);
+      }
+      .home-page .callout:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 20px 44px -30px
+          color-mix(in srgb, currentColor 70%, transparent);
+      }
+
+      /* ---------- Buttons ---------- */
+      .home-page .button {
+        transition:
+          transform 0.3s var(--hp-ease),
+          box-shadow 0.3s var(--hp-ease),
+          filter 0.3s var(--hp-ease);
+      }
+      .home-page .button:hover {
+        transform: translateY(-2px);
+      }
+      .home-page .button-primary:hover {
+        box-shadow: 0 14px 30px -16px var(--hp-glow);
+      }
+
+      /* ---------- Section separators ---------- */
+      .home-page .section-alt {
+        box-shadow: inset 0 1px 0 var(--hp-line);
+      }
+
+      /* ---------- Focus visibility ---------- */
+      .home-page a:focus-visible,
+      .home-page button:focus-visible {
+        outline: 2px solid var(--hp-acc);
+        outline-offset: 3px;
+        border-radius: 6px;
+      }
+
+      /* ---------- Scroll reveal (classes added by JS only) ---------- */
+      .home-page .ui-reveal {
+        opacity: 0;
+        translate: 0 16px;
+        transition:
+          opacity 0.7s var(--hp-ease),
+          translate 0.7s var(--hp-ease);
+        transition-delay: var(--ui-delay, 0ms);
+      }
+      .home-page .ui-reveal.is-visible {
+        opacity: 1;
+        translate: 0 0;
+      }
+
+      /* ---------- Keyframes ---------- */
+      @keyframes hp-fade-up {
+        from {
+          opacity: 0;
+          transform: translateY(14px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @keyframes hp-grid {
+        to {
+          background-position:
+            58px 58px,
+            58px 58px;
+        }
+      }
+      @keyframes hp-drift {
+        from {
+          transform: translate3d(0, 0, 0) scale(1);
+        }
+        to {
+          transform: translate3d(26px, -20px, 0) scale(1.12);
+        }
+      }
+      @keyframes hp-shift {
+        0%,
+        100% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+      }
+      @keyframes hp-seg {
+        0%,
+        62%,
+        100% {
+          opacity: 0.35;
+        }
+        28% {
+          opacity: 1;
+        }
+      }
+      @keyframes hp-blink {
+        0%,
+        100% {
+          opacity: 0.3;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+      @keyframes hp-caption {
+        0%,
+        100% {
+          opacity: 0.55;
+        }
+        50% {
+          opacity: 0.95;
+        }
+      }
+      @keyframes hp-rule {
+        from {
+          transform: scaleX(0);
+        }
+        to {
+          transform: scaleX(1);
+        }
+      }
+      @keyframes hp-arrow {
+        0%,
+        100% {
+          opacity: 0.45;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      /* ---------- Reduced motion ---------- */
+      @media (prefers-reduced-motion: reduce) {
+        .home-page .hero::before,
+        .home-page .hero::after,
+        .home-page .hero .eyebrow,
+        .home-page .hero h1,
+        .home-page .hero .lead,
+        .home-page .hero .hero-actions,
+        .home-page .hero .hero-note,
+        .home-page .hero h1 span,
+        .home-page .segment-list .segment,
+        .home-page .console-indicators i,
+        .home-page .hero-caption,
+        .home-page .section-heading h2::after,
+        .home-page .diagram-arrow {
+          animation: none !important;
+        }
+        .home-page .ui-reveal {
+          opacity: 1;
+          translate: 0 0;
+          transition: none;
+        }
+        .home-page .card,
+        .home-page .status-item,
+        .home-page .diagram-panel,
+        .home-page .diagram-node,
+        .home-page .workflow-step,
+        .home-page .callout,
+        .home-page .button,
+        .home-page .card-icon {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body class="home-page">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="nav-wrap">
+        <a class="brand" href="./index.html" aria-label="CloudBox home"
+          ><span class="brand-mark"
+            ><svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M7.1 18h10.1a4 4 0 0 0 .4-8A5.8 5.8 0 0 0 6.5 8.8 4.6 4.6 0 0 0 7.1 18Z"
+                stroke="currentColor"
+                stroke-width="1.8"
+              />
+              <path
+                d="m9 12.5 3 3 3-3m-3 2.6V9.7"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              /></svg></span
+          >CloudBox <em>/ lab</em></a
+        >
+        <nav
+          class="nav-links"
+          id="primary-navigation"
+          data-nav-links
+          aria-label="Main navigation"
+        >
+          <a
+            class="nav-link"
+            href="./index.html"
+            aria-current="page"
+            data-testid="link-home"
+            >Overview</a
+          >
+          <a
+            class="nav-link"
+            href="./architecture.html"
+            data-testid="link-architecture"
+            >Architecture</a
+          >
+          <a
+            class="nav-link"
+            href="./documentation.html"
+            data-testid="link-documentation"
+            >Documentation</a
+          >
+          <a class="nav-link" href="./security.html" data-testid="link-security"
+            >Security lab</a
+          >
+          <a class="nav-link" href="./testing.html" data-testid="link-testing"
+            >Testing</a
+          >
+          <a class="nav-link" href="./team.html" data-testid="link-team"
+            >Project team</a
+          >
+        </nav>
+        <div class="nav-tools">
+          <button
+            class="theme-toggle"
+            type="button"
+            data-theme-toggle
+            data-testid="toggle-theme"
+            aria-label="Switch theme"
+          ></button
+          ><button
+            class="menu-toggle"
+            type="button"
+            data-menu-toggle
+            aria-controls="primary-navigation"
+            aria-expanded="false"
+            aria-label="Open navigation menu"
+            data-testid="toggle-menu"
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M4 7h16M4 12h16M4 17h16"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+        </div>
       </div>
-      <div class="hero-visual reveal reveal-delay" aria-label="Illustration of a file split into encrypted segments"><div class="visual-orbit"></div><div class="visual-core">
-        <div class="console-top"><span>CLOUDBOX / LOCAL WORKFLOW</span><span class="console-indicators"><i></i><i></i><i></i></span></div>
-        <div class="file-row"><span class="file-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3.8h8l4 4V20H6V3.8Z" stroke="currentColor" stroke-width="1.7"/><path d="M14 4v4h4M9 13h6m-6 3h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span><div><div class="file-name">research-notes.pdf</div><div class="file-sub">LOCAL FILE · 8.4 MiB</div></div><span class="pill">IN BROWSER</span></div>
-        <div class="segment-list" aria-label="Illustrative encrypted segments"><span class="segment"></span><span class="segment"></span><span class="segment"></span><span class="segment"></span><span class="segment"></span><span class="segment"></span><span class="segment"></span></div>
-        <div class="console-bottom"><span>SEGMENTS → AES-256-GCM</span><span>KEY STAYS SEPARATE</span></div>
-      </div><span class="hero-caption">MODEL VIEW · NOT LIVE DATA</span></div>
-    </div></section>
-    <section class="section"><div class="container">
-      <div class="section-heading"><div><span class="eyebrow">Deployment truth</span><h2>Clear about what runs here.</h2></div><p>This site teaches the design. Cloud resources and a complete upload API require separate setup and are not represented as live services.</p></div>
-      <div class="status-strip" data-testid="deployment-status">
-        <div class="status-item"><span class="status-label">LOCAL DEMO</span><p>Static pages and browser-side learning tools are served from this site.</p></div>
-        <div class="status-item"><span class="status-label">AWS DEPLOYMENT REQUIRED</span><p>Private S3, CloudFront, OAC, and DNS must be provisioned in an AWS account.</p></div>
-        <div class="status-item"><span class="status-label">CONFIGURATION REQUIRED</span><p>Set real distribution details and verify origin, HTTPS, and access policies before delivery tests.</p></div>
+    </header>
+    <main id="main">
+      <section class="hero">
+        <div class="container hero-grid">
+          <div class="reveal">
+            <span class="eyebrow">A file security learning lab</span>
+            <h1>Secure Storage.<br /><span>Faster Delivery.</span></h1>
+            <p class="lead">
+              CloudBox is a practical walkthrough of how browser-side file
+              segmentation and AES-GCM can pair with private object storage and
+              a global content-delivery edge.
+            </p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="./architecture.html"
+                >Explore the architecture
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M5 12h14m-6-6 6 6-6 6"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  /></svg></a
+              ><a class="button button-secondary" href="./security.html"
+                >Open security lab</a
+              >
+            </div>
+            <div class="hero-note">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="m5 12 4 4L19 6"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                /></svg
+              ><span
+                >An educational prototype for a third-year computer engineering
+                project. No upload service or AWS account is silently
+                assumed.</span
+              >
+            </div>
+          </div>
+          <div
+            class="hero-visual reveal reveal-delay"
+            aria-label="Illustration of a file split into encrypted segments"
+          >
+            <div class="visual-orbit"></div>
+            <div class="visual-core">
+              <div class="console-top">
+                <span>CLOUDBOX / LOCAL WORKFLOW</span
+                ><span class="console-indicators"><i></i><i></i><i></i></span>
+              </div>
+              <div class="file-row">
+                <span class="file-icon"
+                  ><svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M6 3.8h8l4 4V20H6V3.8Z"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                    />
+                    <path
+                      d="M14 4v4h4M9 13h6m-6 3h6"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                    /></svg
+                ></span>
+                <div>
+                  <div class="file-name">research-notes.pdf</div>
+                  <div class="file-sub">LOCAL FILE · 8.4 MiB</div>
+                </div>
+                <span class="pill">IN BROWSER</span>
+              </div>
+              <div
+                class="segment-list"
+                aria-label="Illustrative encrypted segments"
+              >
+                <span class="segment"></span><span class="segment"></span
+                ><span class="segment"></span><span class="segment"></span
+                ><span class="segment"></span><span class="segment"></span
+                ><span class="segment"></span>
+              </div>
+              <div class="console-bottom">
+                <span>SEGMENTS → AES-256-GCM</span
+                ><span>KEY STAYS SEPARATE</span>
+              </div>
+            </div>
+            <span class="hero-caption">MODEL VIEW · NOT LIVE DATA</span>
+          </div>
+        </div>
+      </section>
+      <section class="section">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">Deployment truth</span>
+              <h2>Clear about what runs here.</h2>
+            </div>
+            <p>
+              This site teaches the design. Cloud resources and a complete
+              upload API require separate setup and are not represented as live
+              services.
+            </p>
+          </div>
+          <div class="status-strip" data-testid="deployment-status">
+            <div class="status-item">
+              <span class="status-label">LOCAL DEMO</span>
+              <p>
+                Static pages and browser-side learning tools are served from
+                this site.
+              </p>
+            </div>
+            <div class="status-item">
+              <span class="status-label">AWS DEPLOYMENT REQUIRED</span>
+              <p>
+                Private S3, CloudFront, OAC, and DNS must be provisioned in an
+                AWS account.
+              </p>
+            </div>
+            <div class="status-item">
+              <span class="status-label">CONFIGURATION REQUIRED</span>
+              <p>
+                Set real distribution details and verify origin, HTTPS, and
+                access policies before delivery tests.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="section">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">Project overview</span>
+              <h2>A cloud computing mini-project.</h2>
+            </div>
+            <p>Student project by Krushna Kedar · Academic year 2026.</p>
+          </div>
+          <div class="grid-2">
+            <article class="card">
+              <h3>Project overview</h3>
+              <p>
+                CloudBox demonstrates block-based file operations and explains
+                how a static documentation site can be delivered from private
+                Amazon S3 through CloudFront.
+              </p>
+              <p class="inline-meta">CATEGORY · CLOUD COMPUTING MINI-PROJECT</p>
+            </article>
+            <article class="card">
+              <h3>Objectives</h3>
+              <ul>
+                <li>Split real files into configurable blocks.</li>
+                <li>Encrypt and authenticate blocks with AES-256-GCM.</li>
+                <li>Download the encrypted package and a separate key.</li>
+                <li>Decrypt and reconstruct the original file.</li>
+                <li>Document private S3, CloudFront, OAC, and HTTPS setup.</li>
+              </ul>
+            </article>
+          </div>
+          <div class="section-heading" style="margin-top: 48px">
+            <div>
+              <span class="eyebrow">Technology stack</span>
+              <h2>Static by design.</h2>
+            </div>
+            <p>
+              No database, backend, API keys, or paid integrations are needed
+              for this local demo.
+            </p>
+          </div>
+          <div class="grid-3">
+            <article class="card">
+              <h3>Browser layer</h3>
+              <p>HTML5 · CSS3 · Vanilla JavaScript · Web Crypto API</p>
+            </article>
+            <article class="card">
+              <h3>Cryptography</h3>
+              <p>AES-256-GCM · 12-byte random IVs · separate key file</p>
+            </article>
+            <article class="card">
+              <h3>Cloud target</h3>
+              <p>Amazon S3 · CloudFront · Git · GitHub</p>
+            </article>
+          </div>
+        </div>
+      </section>
+      <section class="section section-alt">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">Architecture preview</span>
+              <h2>Private origin. Public edge.</h2>
+            </div>
+            <p>
+              Intended design only—no AWS bucket or CloudFront distribution is
+              provisioned by this project.
+            </p>
+          </div>
+          <div class="diagram-panel">
+            <div class="diagram-label">Website delivery path · intended</div>
+            <div
+              class="diagram-flow"
+              role="img"
+              aria-label="Browser connects over HTTPS to CloudFront, which uses Origin Access Control to retrieve assets from a private S3 bucket"
+            >
+              <div class="diagram-node">
+                <strong>Browser</strong><span>visitor request</span>
+              </div>
+              <b class="diagram-arrow" aria-hidden="true">→</b>
+              <div class="diagram-node">
+                <strong>HTTPS</strong><span>protected in transit</span>
+              </div>
+              <b class="diagram-arrow" aria-hidden="true">→</b>
+              <div class="diagram-node">
+                <strong>CloudFront</strong><span>edge delivery</span>
+              </div>
+              <b class="diagram-arrow" aria-hidden="true">→</b>
+              <div class="diagram-node">
+                <strong>OAC</strong><span>signed origin request</span>
+              </div>
+              <b class="diagram-arrow" aria-hidden="true">→</b>
+              <div class="diagram-node">
+                <strong>Private S3</strong><span>static objects</span>
+              </div>
+            </div>
+          </div>
+          <div class="hero-actions">
+            <a class="button button-secondary" href="./architecture.html"
+              >View full architecture</a
+            ><a class="button button-secondary" href="./documentation.html"
+              >Open technical documentation</a
+            >
+          </div>
+        </div>
+      </section>
+      <section class="section section-alt">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">The system in one view</span>
+              <h2>Six capabilities. Two security boundaries.</h2>
+            </div>
+            <p>
+              Browser cryptography protects file contents; origin controls
+              govern delivery of the static site and stored objects.
+            </p>
+          </div>
+          <div class="grid-3">
+            <article class="card">
+              <div class="card-icon">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M7 3h7l4 4v14H7V3Z"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                  />
+                  <path
+                    d="M14 3v5h5M10 13h5m-5 3h5"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </div>
+              <h3>Secure File Processing</h3>
+              <p>
+                Divide a real file into ordered, configurable blocks in the
+                browser for the encryption workflow.
+              </p>
+            </article>
+            <article class="card">
+              <div class="card-icon">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <rect
+                    x="5"
+                    y="10"
+                    width="14"
+                    height="11"
+                    rx="2"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                  />
+                  <path
+                    d="M8 10V7a4 4 0 1 1 8 0v3m-4 4v3"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </div>
+              <h3>Encrypted Block Storage</h3>
+              <p>
+                AES-256-GCM authenticates each encrypted block. The key is saved
+                separately from the package.
+              </p>
+            </article>
+            <article class="card">
+              <div class="card-icon">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M4 18h16M6 15V9m4 6V5m4 10V7m4 8v-4"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </div>
+              <h3>Cloud Object Storage</h3>
+              <p>
+                Amazon S3 can store static site assets and encrypted packages
+                behind a private bucket policy.
+              </p>
+            </article>
+            <article class="card">
+              <div class="card-icon">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="9"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                  />
+                  <path
+                    d="M3.5 12h17M12 3a14 14 0 0 1 0 18m0-18a14 14 0 0 0 0 18"
+                    stroke="currentColor"
+                    stroke-width="1.3"
+                  />
+                </svg>
+              </div>
+              <h3>Global Content Delivery</h3>
+              <p>
+                CloudFront can cache and distribute static content from edge
+                locations closer to visitors.
+              </p>
+            </article>
+            <article class="card">
+              <div class="card-icon">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <rect
+                    x="5"
+                    y="10"
+                    width="14"
+                    height="11"
+                    rx="2"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                  />
+                  <path
+                    d="M8 10V7a4 4 0 1 1 8 0v3"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </div>
+              <h3>HTTPS Protection</h3>
+              <p>
+                TLS protects traffic in transit; a CloudFront viewer policy can
+                redirect HTTP requests to HTTPS.
+              </p>
+            </article>
+            <article class="card">
+              <div class="card-icon">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M5 12h14m-6-6 6 6-6 6M5 5v14"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </div>
+              <h3>File Reconstruction</h3>
+              <p>
+                Authenticate and decrypt blocks in their saved order, then
+                verify the original byte size.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+      <section class="section">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">Workflow</span>
+              <h2>From source file to reconstructed output.</h2>
+            </div>
+            <p>
+              Encryption and reconstruction happen at the client in the learning
+              workflow. Delivery infrastructure is a separate deployment
+              concern.
+            </p>
+          </div>
+          <div class="workflow">
+            <div class="workflow-step">
+              <span class="step-number">01</span>
+              <h3>Select</h3>
+              <p>Choose a local source file.</p>
+            </div>
+            <div class="workflow-step">
+              <span class="step-number">02</span>
+              <h3>Segment</h3>
+              <p>Split into ordered blocks.</p>
+            </div>
+            <div class="workflow-step">
+              <span class="step-number">03</span>
+              <h3>Encrypt</h3>
+              <p>Protect blocks with AES-GCM.</p>
+            </div>
+            <div class="workflow-step">
+              <span class="step-number">04</span>
+              <h3>Package</h3>
+              <p>Keep metadata and key distinct.</p>
+            </div>
+            <div class="workflow-step">
+              <span class="step-number">05</span>
+              <h3>Rebuild</h3>
+              <p>Authenticate, decrypt, join.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="section section-alt">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">Useful boundaries</span>
+              <h2>What this prototype does not claim.</h2>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="callout">
+              <strong>No authenticated upload API</strong>
+              <p>
+                CloudBox does not provide identity, authorization, signed
+                uploads, or a server-side upload endpoint. Encrypting a file
+                locally does not create those services.
+              </p>
+            </div>
+            <div class="callout">
+              <strong>No deployment implied</strong>
+              <p>
+                CloudFront and private S3 are an architecture target. This local
+                site does not contain real AWS URLs, credentials, or a
+                provisioned bucket.
+              </p>
+            </div>
+          </div>
+          <div class="hero-actions">
+            <a class="button button-secondary" href="./documentation.html"
+              >Read the project documentation</a
+            ><a class="button button-secondary" href="./testing.html"
+              >Review test scenarios</a
+            >
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="footer">
+      <div class="container footer-inner">
+        <div>
+          <div class="footer-brand">
+            CloudBox <span class="muted">/ secure file lab</span>
+          </div>
+          <p>
+            Educational prototype. Treat deployment assumptions and security
+            limitations as part of the design, not fine print.
+          </p>
+        </div>
+        <nav class="footer-links" aria-label="Footer navigation">
+          <a href="./architecture.html">Architecture</a
+          ><a href="./documentation.html">Documentation</a
+          ><a href="./security.html">Security lab</a
+          ><a href="./team.html">Team</a><a href="./testing.html">Testing</a>
+        </nav>
+        <span class="inline-meta"
+          >© <span data-year></span> CloudBox · Academic year 2026</span
+        >
       </div>
-    </div></section>
-    <section class="section"><div class="container">
-      <div class="section-heading"><div><span class="eyebrow">Project overview</span><h2>A cloud computing mini-project.</h2></div><p>Student project by Krushna Kedar · Academic year 2026.</p></div>
-      <div class="grid-2">
-        <article class="card"><h3>Project overview</h3><p>CloudBox demonstrates block-based file operations and explains how a static documentation site can be delivered from private Amazon S3 through CloudFront.</p><p class="inline-meta">CATEGORY · CLOUD COMPUTING MINI-PROJECT</p></article>
-        <article class="card"><h3>Objectives</h3><ul><li>Split real files into configurable blocks.</li><li>Encrypt and authenticate blocks with AES-256-GCM.</li><li>Download the encrypted package and a separate key.</li><li>Decrypt and reconstruct the original file.</li><li>Document private S3, CloudFront, OAC, and HTTPS setup.</li></ul></article>
-      </div>
-      <div class="section-heading" style="margin-top:48px"><div><span class="eyebrow">Technology stack</span><h2>Static by design.</h2></div><p>No database, backend, API keys, or paid integrations are needed for this local demo.</p></div>
-      <div class="grid-3">
-        <article class="card"><h3>Browser layer</h3><p>HTML5 · CSS3 · Vanilla JavaScript · Web Crypto API</p></article>
-        <article class="card"><h3>Cryptography</h3><p>AES-256-GCM · 12-byte random IVs · separate key file</p></article>
-        <article class="card"><h3>Cloud target</h3><p>Amazon S3 · CloudFront · Git · GitHub</p></article>
-      </div>
-    </div></section>
-    <section class="section section-alt"><div class="container">
-      <div class="section-heading"><div><span class="eyebrow">Architecture preview</span><h2>Private origin. Public edge.</h2></div><p>Intended design only—no AWS bucket or CloudFront distribution is provisioned by this project.</p></div>
-      <div class="diagram-panel"><div class="diagram-label">Website delivery path · intended</div><div class="diagram-flow" role="img" aria-label="Browser connects over HTTPS to CloudFront, which uses Origin Access Control to retrieve assets from a private S3 bucket"><div class="diagram-node"><strong>Browser</strong><span>visitor request</span></div><b class="diagram-arrow" aria-hidden="true">→</b><div class="diagram-node"><strong>HTTPS</strong><span>protected in transit</span></div><b class="diagram-arrow" aria-hidden="true">→</b><div class="diagram-node"><strong>CloudFront</strong><span>edge delivery</span></div><b class="diagram-arrow" aria-hidden="true">→</b><div class="diagram-node"><strong>OAC</strong><span>signed origin request</span></div><b class="diagram-arrow" aria-hidden="true">→</b><div class="diagram-node"><strong>Private S3</strong><span>static objects</span></div></div></div>
-      <div class="hero-actions"><a class="button button-secondary" href="./architecture.html">View full architecture</a><a class="button button-secondary" href="./documentation.html">Open technical documentation</a></div>
-    </div></section>
-    <section class="section section-alt"><div class="container">
-      <div class="section-heading"><div><span class="eyebrow">The system in one view</span><h2>Six capabilities. Two security boundaries.</h2></div><p>Browser cryptography protects file contents; origin controls govern delivery of the static site and stored objects.</p></div>
-      <div class="grid-3">
-        <article class="card"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 3h7l4 4v14H7V3Z" stroke="currentColor" stroke-width="1.7"/><path d="M14 3v5h5M10 13h5m-5 3h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div><h3>Secure File Processing</h3><p>Divide a real file into ordered, configurable blocks in the browser for the encryption workflow.</p></article>
-        <article class="card"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7a4 4 0 1 1 8 0v3m-4 4v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div><h3>Encrypted Block Storage</h3><p>AES-256-GCM authenticates each encrypted block. The key is saved separately from the package.</p></article>
-        <article class="card"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 18h16M6 15V9m4 6V5m4 10V7m4 8v-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div><h3>Cloud Object Storage</h3><p>Amazon S3 can store static site assets and encrypted packages behind a private bucket policy.</p></article>
-        <article class="card"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 12h17M12 3a14 14 0 0 1 0 18m0-18a14 14 0 0 0 0 18" stroke="currentColor" stroke-width="1.3"/></svg></div><h3>Global Content Delivery</h3><p>CloudFront can cache and distribute static content from edge locations closer to visitors.</p></article>
-        <article class="card"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7a4 4 0 1 1 8 0v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div><h3>HTTPS Protection</h3><p>TLS protects traffic in transit; a CloudFront viewer policy can redirect HTTP requests to HTTPS.</p></article>
-        <article class="card"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6M5 5v14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h3>File Reconstruction</h3><p>Authenticate and decrypt blocks in their saved order, then verify the original byte size.</p></article>
-      </div>
-    </div></section>
-    <section class="section"><div class="container">
-      <div class="section-heading"><div><span class="eyebrow">Workflow</span><h2>From source file to reconstructed output.</h2></div><p>Encryption and reconstruction happen at the client in the learning workflow. Delivery infrastructure is a separate deployment concern.</p></div>
-      <div class="workflow">
-        <div class="workflow-step"><span class="step-number">01</span><h3>Select</h3><p>Choose a local source file.</p></div>
-        <div class="workflow-step"><span class="step-number">02</span><h3>Segment</h3><p>Split into ordered blocks.</p></div>
-        <div class="workflow-step"><span class="step-number">03</span><h3>Encrypt</h3><p>Protect blocks with AES-GCM.</p></div>
-        <div class="workflow-step"><span class="step-number">04</span><h3>Package</h3><p>Keep metadata and key distinct.</p></div>
-        <div class="workflow-step"><span class="step-number">05</span><h3>Rebuild</h3><p>Authenticate, decrypt, join.</p></div>
-      </div>
-    </div></section>
-    <section class="section section-alt"><div class="container">
-      <div class="section-heading"><div><span class="eyebrow">Useful boundaries</span><h2>What this prototype does not claim.</h2></div></div>
-      <div class="grid-2">
-        <div class="callout"><strong>No authenticated upload API</strong><p>CloudBox does not provide identity, authorization, signed uploads, or a server-side upload endpoint. Encrypting a file locally does not create those services.</p></div>
-        <div class="callout"><strong>No deployment implied</strong><p>CloudFront and private S3 are an architecture target. This local site does not contain real AWS URLs, credentials, or a provisioned bucket.</p></div>
-      </div>
-      <div class="hero-actions"><a class="button button-secondary" href="./documentation.html">Read the project documentation</a><a class="button button-secondary" href="./testing.html">Review test scenarios</a></div>
-    </div></section>
-  </main>
-  <footer class="footer"><div class="container footer-inner"><div><div class="footer-brand">CloudBox <span class="muted">/ secure file lab</span></div><p>Educational prototype. Treat deployment assumptions and security limitations as part of the design, not fine print.</p></div><nav class="footer-links" aria-label="Footer navigation"><a href="./architecture.html">Architecture</a><a href="./documentation.html">Documentation</a><a href="./security.html">Security lab</a><a href="./team.html">Team</a><a href="./testing.html">Testing</a></nav><span class="inline-meta">© <span data-year></span> CloudBox · Academic year 2026</span></div></footer>
-  <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="false"></div>
-  <script type="module" src="./js/app.js"></script><script type="module" src="./js/diagrams.js"></script>
-</body></html>
+    </footer>
+    <div
+      class="toast-region"
+      data-toast-region
+      aria-live="polite"
+      aria-atomic="false"
+    ></div>
+    <script type="module" src="./js/app.js"></script>
+    <script type="module" src="./js/diagrams.js"></script>
+    <script>
+      /* Additive scroll-reveal only. The page is fully readable without this script. */
+      (function () {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+          return;
+        if (!("IntersectionObserver" in window)) return;
+
+        var targets = [];
+        document
+          .querySelectorAll(".home-page main .section")
+          .forEach(function (section) {
+            var items = section.querySelectorAll(
+              ".section-heading, .status-item, .card, .diagram-panel, .workflow-step, .callout",
+            );
+            items.forEach(function (el, i) {
+              el.classList.add("ui-reveal");
+              el.style.setProperty("--ui-delay", Math.min(i * 70, 350) + "ms");
+              targets.push(el);
+            });
+          });
+        if (!targets.length) return;
+
+        function settle(el) {
+          el.classList.remove("ui-reveal", "is-visible");
+          el.style.removeProperty("--ui-delay");
+        }
+
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (!entry.isIntersecting) return;
+              var el = entry.target;
+              el.classList.add("is-visible");
+              observer.unobserve(el);
+
+              var done = function (e) {
+                if (e.target !== el) return;
+                if (
+                  e.propertyName !== "translate" &&
+                  e.propertyName !== "opacity"
+                )
+                  return;
+                el.removeEventListener("transitionend", done);
+                settle(el);
+              };
+              el.addEventListener("transitionend", done);
+              setTimeout(function () {
+                settle(el);
+              }, 1800);
+            });
+          },
+          { threshold: 0.14, rootMargin: "0px 0px -40px 0px" },
+        );
+
+        targets.forEach(function (el) {
+          observer.observe(el);
+        });
+      })();
+    </script>
+  </body>
+</html>

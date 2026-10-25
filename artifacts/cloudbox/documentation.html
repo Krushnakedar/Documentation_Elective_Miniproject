@@ -1,18 +1,805 @@
 <!doctype html>
-<html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Documentation — CloudBox</title><meta name="description" content="Project documentation for CloudBox secure file storage and content delivery."><link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./css/style.css"></head>
-<body><a class="skip-link" href="#main">Skip to content</a><header class="site-header"><div class="nav-wrap"><a class="brand" href="./index.html"><span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7.1 18h10.1a4 4 0 0 0 .4-8A5.8 5.8 0 0 0 6.5 8.8 4.6 4.6 0 0 0 7.1 18Z" stroke="currentColor" stroke-width="1.8"/><path d="m9 12.5 3 3 3-3m-3 2.6V9.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>CloudBox <em>/ lab</em></a><nav class="nav-links" data-nav-links aria-label="Main navigation"><a class="nav-link" href="./index.html">Overview</a><a class="nav-link" href="./architecture.html">Architecture</a><a class="nav-link" href="./documentation.html" aria-current="page">Documentation</a><a class="nav-link" href="./security.html">Security lab</a><a class="nav-link" href="./testing.html">Testing</a><a class="nav-link" href="./team.html">Project team</a></nav><div class="nav-tools"><button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch theme" data-testid="toggle-theme"></button><button class="menu-toggle" type="button" data-menu-toggle aria-controls="primary-navigation" aria-expanded="false" aria-label="Open navigation menu" data-testid="toggle-menu"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div></div></header>
-<main id="main"><section class="page-hero"><div class="container"><div class="breadcrumb"><a href="./index.html">CloudBox</a> / Documentation</div><span class="eyebrow">Project field notes</span><h1>Documentation</h1><p class="lead">A concise implementation guide to the educational prototype, from its boundaries and local workflow to deployment concepts and open risks.</p></div></section>
-<div class="container content-layout"><aside class="toc" aria-label="Documentation contents"><span class="toc-title">On this page · 25 sections</span><nav>
-<a href="#abstract">01 Abstract</a><a href="#introduction">02 Introduction</a><a href="#problem">03 Problem statement</a><a href="#objectives">04 Objectives</a><a href="#scope">05 Scope</a><a href="#stack">06 Technology stack</a><a href="#requirements">07 Requirements</a><a href="#structure">08 Project structure</a><a href="#local-setup">09 Local setup</a><a href="#segmentation">10 Segmentation</a><a href="#cryptography">11 Cryptography</a><a href="#package-format">12 Package format</a><a href="#reconstruction">13 Reconstruction</a><a href="#s3">14 Private S3</a><a href="#cloudfront">15 CloudFront</a><a href="#oac">16 Origin Access Control</a><a href="#https">17 HTTPS</a><a href="#upload">18 Upload path</a><a href="#download">19 Download path</a><a href="#troubleshooting">20 Troubleshooting</a><a href="#security-notes">21 Security notes</a><a href="#limitations">22 Limitations</a><a href="#future-work">23 Future work</a><a href="#conclusion">24 Conclusion</a><a href="#references">25 References</a>
-</nav></aside><article class="doc-content">
-<section class="doc-section" id="abstract"><h2>01 · Abstract</h2><p>CloudBox is an educational secure-file-storage and content-delivery prototype. It explains client-side file segmentation, AES-256-GCM authenticated encryption, private Amazon S3 storage, and CloudFront delivery as connected but distinct concerns. The project is a learning artifact, not a managed storage product or audited security system.</p></section>
-<section class="doc-section" id="introduction"><h2>02 · Introduction</h2><p>Large-file workflows involve transport, storage, confidentiality, integrity, and retrieval. CloudBox makes those concepts visible through a static educational site and a browser-oriented file workflow. It separates the trust decisions made by the client from the access rules of a cloud origin.</p></section>
-<section class="doc-section" id="problem"><h2>03 · Problem statement</h2><p>Users often confuse HTTPS, private buckets, and encryption at rest with end-to-end file confidentiality. They are not interchangeable. The project demonstrates where file bytes are transformed and where origin access is controlled, while making missing services and assumptions explicit.</p></section>
-<section class="doc-section" id="objectives"><h2>04 · Objectives</h2><ul><li>Demonstrate block-based file processing with a configurable block size.</li><li>Explain AES-GCM confidentiality and tamper detection at a high level.</li><li>Show private S3 and CloudFront OAC as a static content delivery pattern.</li><li>Provide a transparent test ledger and useful operational documentation.</li></ul></section>
-<section class="doc-section" id="scope"><h2>05 · Scope</h2><p>Included: static project pages, architecture diagrams, documentation, browser workflow interface, and a manually maintained test ledger. Excluded: account management, authenticated upload API, credential management, production key escrow, cloud provisioning, and security certification.</p></section>
-<section class="doc-section" id="stack"><h2>06 · Technology stack</h2><p>The presentation layer uses semantic HTML, CSS, and vanilla JavaScript. Vite is a development and build tool that emits a static multi-page distribution. The architecture discussion references browser cryptography concepts, Amazon S3, CloudFront, Origin Access Control, and HTTPS.</p><p>No backend or database is required for this educational website. Test annotations can be saved locally in the visitor's browser.</p></section>
-<section class="doc-section" id="requirements"><h2>07 · Hardware and software requirements</h2><h3>Hardware</h3><ul><li>A computer or phone with enough free memory for browser-based file processing; large files need substantially more memory than their source size.</li><li>Internet access is needed only for hosted pages or configured CloudFront downloads.</li></ul><h3>Runtime software</h3><ul><li>A modern browser with JavaScript and Web Crypto enabled.</li><li>A secure context such as HTTPS or localhost for cryptographic APIs.</li><li>Local file access granted by the user through a file picker.</li></ul><h3>Build software</h3><p>Node.js and pnpm are needed only to develop or build the static pages.</p></section>
-<section class="doc-section" id="structure"><h2>08 · Project structure</h2><pre class="code-block" id="project-structure"><button class="copy-button" type="button" data-copy="project-structure" aria-label="Copy project structure">Copy</button>cloudbox/
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Documentation — CloudBox</title>
+    <meta
+      name="description"
+      content="Project documentation for CloudBox secure file storage and content delivery."
+    />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <style>
+      /* Additive styles for expanded documentation content.
+         Uses currentColor so it adapts to both light and dark themes. */
+      .doc-section .doc-lead {
+        font-size: 1.02rem;
+        opacity: 0.9;
+      }
+      .table-wrap {
+        width: 100%;
+        overflow-x: auto;
+        margin: 1rem 0 1.6rem;
+        -webkit-overflow-scrolling: touch;
+      }
+      .doc-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.94rem;
+        min-width: 520px;
+      }
+      .doc-table caption {
+        text-align: left;
+        font-size: 0.82rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        opacity: 0.65;
+        padding-bottom: 0.5rem;
+      }
+      .doc-table th,
+      .doc-table td {
+        text-align: left;
+        vertical-align: top;
+        padding: 0.65rem 0.8rem;
+        border-bottom: 1px solid
+          color-mix(in srgb, currentColor 15%, transparent);
+      }
+      .doc-table th {
+        font-size: 0.78rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        opacity: 0.72;
+        white-space: nowrap;
+      }
+      .doc-table tbody tr:last-child td {
+        border-bottom: 0;
+      }
+      .doc-note {
+        border-left: 3px solid color-mix(in srgb, currentColor 38%, transparent);
+        background: color-mix(in srgb, currentColor 6%, transparent);
+        border-radius: 0 0.55rem 0.55rem 0;
+        padding: 0.85rem 1.05rem;
+        margin: 1.15rem 0 1.5rem;
+        font-size: 0.95rem;
+      }
+      .doc-note p:first-child {
+        margin-top: 0;
+      }
+      .doc-note p:last-child {
+        margin-bottom: 0;
+      }
+      .doc-note .note-label {
+        display: block;
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.7;
+        margin-bottom: 0.35rem;
+      }
+      .doc-grid {
+        display: grid;
+        gap: 0.8rem;
+        grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+        margin: 1.1rem 0 1.6rem;
+      }
+      .doc-card {
+        border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+        background: color-mix(in srgb, currentColor 4%, transparent);
+        border-radius: 0.65rem;
+        padding: 0.9rem 1rem;
+      }
+      .doc-card h3,
+      .doc-card h4 {
+        margin: 0 0 0.4rem;
+        font-size: 0.98rem;
+        letter-spacing: 0.01em;
+      }
+      .doc-card p {
+        margin: 0;
+        font-size: 0.92rem;
+        opacity: 0.88;
+      }
+      .doc-kv {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .doc-kv li {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: space-between;
+        padding: 0.45rem 0;
+        border-bottom: 1px dashed
+          color-mix(in srgb, currentColor 14%, transparent);
+        font-size: 0.92rem;
+      }
+      .doc-kv li:last-child {
+        border-bottom: 0;
+      }
+      .doc-kv .k {
+        opacity: 0.72;
+      }
+      .doc-kv .v {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        text-align: right;
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="nav-wrap">
+        <a class="brand" href="./index.html"
+          ><span class="brand-mark"
+            ><svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M7.1 18h10.1a4 4 0 0 0 .4-8A5.8 5.8 0 0 0 6.5 8.8 4.6 4.6 0 0 0 7.1 18Z"
+                stroke="currentColor"
+                stroke-width="1.8"
+              />
+              <path
+                d="m9 12.5 3 3 3-3m-3 2.6V9.7"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              /></svg></span
+          >CloudBox <em>/ lab</em></a
+        >
+        <nav class="nav-links" data-nav-links aria-label="Main navigation">
+          <a class="nav-link" href="./index.html">Overview</a
+          ><a class="nav-link" href="./architecture.html">Architecture</a
+          ><a class="nav-link" href="./documentation.html" aria-current="page"
+            >Documentation</a
+          ><a class="nav-link" href="./security.html">Security lab</a
+          ><a class="nav-link" href="./testing.html">Testing</a
+          ><a class="nav-link" href="./team.html">Project team</a>
+        </nav>
+        <div class="nav-tools">
+          <button
+            class="theme-toggle"
+            type="button"
+            data-theme-toggle
+            aria-label="Switch theme"
+            data-testid="toggle-theme"
+          ></button
+          ><button
+            class="menu-toggle"
+            type="button"
+            data-menu-toggle
+            aria-controls="primary-navigation"
+            aria-expanded="false"
+            aria-label="Open navigation menu"
+            data-testid="toggle-menu"
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M4 7h16M4 12h16M4 17h16"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+    <main id="main">
+      <section class="page-hero">
+        <div class="container">
+          <div class="breadcrumb">
+            <a href="./index.html">CloudBox</a> / Documentation
+          </div>
+          <span class="eyebrow">Project field notes</span>
+          <h1>Documentation</h1>
+          <p class="lead">
+            A concise implementation guide to the educational prototype, from
+            its boundaries and local workflow to deployment concepts and open
+            risks. Every section states plainly what is demonstrated in the
+            browser, what is described as an architectural pattern, and what is
+            deliberately left out.
+          </p>
+        </div>
+      </section>
+      <div class="container content-layout">
+        <aside class="toc" aria-label="Documentation contents">
+          <span class="toc-title">On this page · 25 sections</span>
+          <nav>
+            <a href="#abstract">01 Abstract</a
+            ><a href="#introduction">02 Introduction</a
+            ><a href="#problem">03 Problem statement</a
+            ><a href="#objectives">04 Objectives</a><a href="#scope">05 Scope</a
+            ><a href="#stack">06 Technology stack</a
+            ><a href="#requirements">07 Requirements</a
+            ><a href="#structure">08 Project structure</a
+            ><a href="#local-setup">09 Local setup</a
+            ><a href="#segmentation">10 Segmentation</a
+            ><a href="#cryptography">11 Cryptography</a
+            ><a href="#package-format">12 Package format</a
+            ><a href="#reconstruction">13 Reconstruction</a
+            ><a href="#s3">14 Private S3</a
+            ><a href="#cloudfront">15 CloudFront</a
+            ><a href="#oac">16 Origin Access Control</a
+            ><a href="#https">17 HTTPS</a><a href="#upload">18 Upload path</a
+            ><a href="#download">19 Download path</a
+            ><a href="#troubleshooting">20 Troubleshooting</a
+            ><a href="#security-notes">21 Security notes</a
+            ><a href="#limitations">22 Limitations</a
+            ><a href="#future-work">23 Future work</a
+            ><a href="#conclusion">24 Conclusion</a
+            ><a href="#references">25 References</a>
+          </nav>
+        </aside>
+        <article class="doc-content">
+          <section class="doc-section" id="abstract">
+            <h2>01 · Abstract</h2>
+            <p class="doc-lead">
+              CloudBox is an educational secure-file-storage and
+              content-delivery prototype. It explains client-side file
+              segmentation, AES-256-GCM authenticated encryption, private Amazon
+              S3 storage, and CloudFront delivery as connected but distinct
+              concerns. The project is a learning artifact, not a managed
+              storage product or audited security system.
+            </p>
+            <p>
+              The prototype is intentionally small so that each step of the
+              workflow can be inspected in isolation: a file is split into
+              ordered blocks, every block is encrypted and authenticated with
+              its own initialization vector, the resulting package is stored as
+              an ordinary static object, and delivery happens over HTTPS through
+              a CDN in front of a non-public origin. Nothing in the chain
+              depends on a hidden server component, which means the behavior of
+              the demo can be verified with browser developer tools.
+            </p>
+            <p>
+              The documentation also spends time on what is
+              <em>not</em> present. There is no identity provider, no upload
+              API, no key escrow service, and no cloud automation. Those
+              omissions are not oversights — they are the parts of a production
+              storage system where most of the real security engineering lives,
+              and the project deliberately names them instead of implying they
+              are solved.
+            </p>
+            <div class="doc-grid">
+              <div class="doc-card">
+                <h3>Client-side processing</h3>
+                <p>
+                  Segmentation and encryption happen in the visitor's browser
+                  through the Web Crypto API.
+                </p>
+              </div>
+              <div class="doc-card">
+                <h3>Private origin</h3>
+                <p>
+                  Object storage is described as non-public, with access limited
+                  to a distribution identity.
+                </p>
+              </div>
+              <div class="doc-card">
+                <h3>Static delivery</h3>
+                <p>
+                  Pages and packages are served as static assets — no backend,
+                  no database, no session layer.
+                </p>
+              </div>
+              <div class="doc-card">
+                <h3>Honest scope</h3>
+                <p>
+                  Educational artifact only. No audit, no penetration test, no
+                  production guarantee.
+                </p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="doc-table">
+                <caption>
+                  Project at a glance
+                </caption>
+                <tbody>
+                  <tr>
+                    <th scope="row">Artifact type</th>
+                    <td>Static multi-page educational site</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Encryption</th>
+                    <td>
+                      AES-256-GCM, 128-bit authentication tag, 12-byte IV per
+                      block
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Default block size</th>
+                    <td>1 MiB (configurable in the demo)</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Delivery pattern</th>
+                    <td>
+                      Private S3 origin + CloudFront with Origin Access Control
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Backend required</th>
+                    <td>None</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Maturity</th>
+                    <td>Educational prototype — not for production data</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="doc-section" id="introduction">
+            <h2>02 · Introduction</h2>
+            <p>
+              Large-file workflows involve transport, storage, confidentiality,
+              integrity, and retrieval. CloudBox makes those concepts visible
+              through a static educational site and a browser-oriented file
+              workflow. It separates the trust decisions made by the client from
+              the access rules of a cloud origin.
+            </p>
+            <p>
+              A useful way to read this document is to follow a single file
+              through the system. The file is chosen locally, so the endpoint
+              holds the plaintext first. It is divided into blocks, so the
+              processing cost is bounded and can be reasoned about one unit at a
+              time. Each block is encrypted and tagged, so confidentiality and
+              integrity travel together. The encrypted package is then treated
+              as an opaque blob that any static host can serve, and the key is
+              handled as a separate secret outside that channel.
+            </p>
+            <p>
+              That separation — package versus key, client versus origin, origin
+              versus edge — is the core teaching point. Most misunderstandings
+              about "secure cloud storage" come from collapsing these boundaries
+              into a single word like "encrypted" and assuming every boundary is
+              covered by the same mechanism.
+            </p>
+            <h3>Trust boundaries in the prototype</h3>
+            <ul>
+              <li>
+                <strong>Browser endpoint:</strong> sees plaintext, holds the key
+                in memory, and performs all cryptography. A compromised endpoint
+                defeats the model.
+              </li>
+              <li>
+                <strong>Network transport:</strong> protected by HTTPS/TLS. This
+                protects bytes in flight, not bytes at rest or bytes already
+                decrypted.
+              </li>
+              <li>
+                <strong>Object storage origin:</strong> holds only ciphertext
+                packages when configured as intended; access is restricted to
+                the distribution.
+              </li>
+              <li>
+                <strong>CDN edge:</strong> caches and forwards static content.
+                It is a delivery accelerator, not an authorization service.
+              </li>
+              <li>
+                <strong>Recipient:</strong> must obtain the key through a
+                separate channel. The package alone is not enough to read the
+                file.
+              </li>
+            </ul>
+            <div class="doc-note">
+              <span class="note-label">Reading note</span>
+              <p>
+                Sections 01–13 describe the file workflow and its data format.
+                Sections 14–19 describe the cloud delivery pattern. Sections
+                20–25 cover operations, risks, and next steps.
+              </p>
+            </div>
+          </section>
+
+          <section class="doc-section" id="problem">
+            <h2>03 · Problem statement</h2>
+            <p>
+              Users often confuse HTTPS, private buckets, and encryption at rest
+              with end-to-end file confidentiality. They are not
+              interchangeable. The project demonstrates where file bytes are
+              transformed and where origin access is controlled, while making
+              missing services and assumptions explicit.
+            </p>
+            <p>Three specific confusions motivate the design:</p>
+            <ul>
+              <li>
+                <strong>"It has a padlock, so the file is private."</strong> A
+                TLS padlock says the connection to a specific endpoint is
+                encrypted. It says nothing about who can read the file later, or
+                who controls the endpoint that receives the plaintext.
+              </li>
+              <li>
+                <strong>"The bucket is private, so the data is safe."</strong>
+                Bucket policies control who can retrieve an object. They do not
+                change the object's contents. A private bucket full of plaintext
+                is still a plaintext store — it is only harder to reach.
+              </li>
+              <li>
+                <strong>"Encryption at rest is end-to-end encryption."</strong>
+                Encryption at rest protects media against physical or
+                infrastructure-level exposure. It does not prevent the storage
+                service, or anyone holding its keys, from reading the object.
+              </li>
+            </ul>
+            <p>
+              CloudBox answers these confusions by making the transformation
+              happen visibly on the client, by keeping the key out of the stored
+              package, and by describing the cloud portion strictly as an access
+              and delivery pattern. The demo can therefore show a file whose
+              ciphertext is publicly retrievable yet whose plaintext is not
+              recoverable without a separately held key.
+            </p>
+            <div class="table-wrap">
+              <table class="doc-table">
+                <caption>
+                  What each mechanism actually protects
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Mechanism</th>
+                    <th scope="col">Protects against</th>
+                    <th scope="col">Does not protect against</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>HTTPS / TLS</td>
+                    <td>Eavesdropping and tampering in transit</td>
+                    <td>Anyone who can read the file at either endpoint</td>
+                  </tr>
+                  <tr>
+                    <td>Private bucket + OAC</td>
+                    <td>Unauthorized direct object retrieval</td>
+                    <td>
+                      Content exposure if the object is readable downstream
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Encryption at rest</td>
+                    <td>Media theft and infrastructure-level access</td>
+                    <td>
+                      Service operators with key access; plaintext at the client
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>AES-GCM in the client</td>
+                    <td>
+                      Confidentiality and tamper detection of stored bytes
+                    </td>
+                    <td>A compromised browser, extension, or device</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="doc-section" id="objectives">
+            <h2>04 · Objectives</h2>
+            <p>
+              The project has four concrete objectives. Each one is written so
+              that it can be checked by inspecting the site or the browser
+              workflow rather than by trusting a claim.
+            </p>
+            <ul>
+              <li>
+                <strong
+                  >Demonstrate block-based file processing with a configurable
+                  block size.</strong
+                >
+                The interface shows how a file of size
+                <code class="mono">S</code> becomes
+                <code class="mono">ceil(S / B)</code> blocks, how the final
+                block may be short, and how block size affects memory behavior.
+              </li>
+              <li>
+                <strong
+                  >Explain AES-GCM confidentiality and tamper detection at a
+                  high level.</strong
+                >
+                The documentation avoids inventing cryptography and instead
+                points at the Web Crypto primitives, explaining the role of the
+                key, the IV, and the authentication tag.
+              </li>
+              <li>
+                <strong
+                  >Show private S3 and CloudFront OAC as a static content
+                  delivery pattern.</strong
+                >
+                The architecture pages describe a non-public origin, a
+                distribution that signs origin requests, and the policy
+                conditions that make that work.
+              </li>
+              <li>
+                <strong
+                  >Provide a transparent test ledger and useful operational
+                  documentation.</strong
+                >
+                Manual test cases are listed with expected results, and the
+                troubleshooting section maps symptoms to plausible causes.
+              </li>
+            </ul>
+            <h3>Non-objectives</h3>
+            <p>
+              CloudBox explicitly does not aim to be a file-sharing product, a
+              backup service, a key management system, or a reference
+              implementation of AWS best practice. Where a real deployment would
+              require a service, the documentation names the service and stops
+              short of pretending it exists.
+            </p>
+          </section>
+
+          <section class="doc-section" id="scope">
+            <h2>05 · Scope</h2>
+            <p>
+              Included: static project pages, architecture diagrams,
+              documentation, browser workflow interface, and a manually
+              maintained test ledger. Excluded: account management,
+              authenticated upload API, credential management, production key
+              escrow, cloud provisioning, and security certification.
+            </p>
+            <div class="table-wrap">
+              <table class="doc-table">
+                <caption>
+                  Scope boundaries
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Area</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Static presentation pages</td>
+                    <td>In scope</td>
+                    <td>
+                      Overview, architecture, documentation, security lab,
+                      testing, team
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Browser segmentation and encryption</td>
+                    <td>In scope</td>
+                    <td>Web Crypto only; no custom primitives</td>
+                  </tr>
+                  <tr>
+                    <td>Package schema documentation</td>
+                    <td>In scope</td>
+                    <td>Versioned JSON with indexed chunks</td>
+                  </tr>
+                  <tr>
+                    <td>Cloud delivery description</td>
+                    <td>In scope (conceptual)</td>
+                    <td>Described as a pattern; not provisioned</td>
+                  </tr>
+                  <tr>
+                    <td>User accounts and sessions</td>
+                    <td>Out of scope</td>
+                    <td>No identity layer exists</td>
+                  </tr>
+                  <tr>
+                    <td>Upload API and authorization</td>
+                    <td>Out of scope</td>
+                    <td>No server component</td>
+                  </tr>
+                  <tr>
+                    <td>Key escrow and recovery</td>
+                    <td>Out of scope</td>
+                    <td>Keys are downloaded separately by the user</td>
+                  </tr>
+                  <tr>
+                    <td>AWS provisioning / IaC</td>
+                    <td>Out of scope</td>
+                    <td>No bucket or distribution is created</td>
+                  </tr>
+                  <tr>
+                    <td>Audit or certification</td>
+                    <td>Out of scope</td>
+                    <td>No formal review is claimed</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="doc-note">
+              <span class="note-label">Boundary note</span>
+              <p>
+                Because the scope stops before identity and key management, any
+                real-world use of this design must add those pieces before
+                handling sensitive data. The prototype is a teaching aid for the
+                transformation and delivery layers only.
+              </p>
+            </div>
+          </section>
+
+          <section class="doc-section" id="stack">
+            <h2>06 · Technology stack</h2>
+            <p>
+              The presentation layer uses semantic HTML, CSS, and vanilla
+              JavaScript. Vite is a development and build tool that emits a
+              static multi-page distribution. The architecture discussion
+              references browser cryptography concepts, Amazon S3, CloudFront,
+              Origin Access Control, and HTTPS.
+            </p>
+            <p>
+              No backend or database is required for this educational website.
+              Test annotations can be saved locally in the visitor's browser.
+            </p>
+            <div class="table-wrap">
+              <table class="doc-table">
+                <caption>
+                  Stack by layer
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Layer</th>
+                    <th scope="col">Technology</th>
+                    <th scope="col">Purpose</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Markup</td>
+                    <td>Semantic HTML5</td>
+                    <td>Accessible page structure, landmarks, and headings</td>
+                  </tr>
+                  <tr>
+                    <td>Styling</td>
+                    <td>CSS with theme tokens</td>
+                    <td>
+                      Light/dark themes, responsive layout, print-friendly
+                      reading
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Behavior</td>
+                    <td>Vanilla JavaScript (ES modules)</td>
+                    <td>
+                      Theme toggle, mobile navigation, copy buttons, local test
+                      notes
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Cryptography</td>
+                    <td>Web Crypto API</td>
+                    <td>
+                      AES-GCM encryption, decryption, and random IV generation
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Build</td>
+                    <td>Vite (via pnpm workspace filter)</td>
+                    <td>Dev server and static multi-page output</td>
+                  </tr>
+                  <tr>
+                    <td>Delivery (described)</td>
+                    <td>S3 + CloudFront + OAC</td>
+                    <td>
+                      Private origin with edge caching and signed origin
+                      requests
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <h3>Why no framework</h3>
+            <p>
+              The site intentionally avoids a component framework. The content
+              is mostly long-form reading and a handful of interactions, so a
+              small amount of hand-written JavaScript keeps the output
+              inspectable and the build trivial. It also keeps the security
+              discussion honest: a reader can view source and see every script
+              the page loads.
+            </p>
+            <h3>Why no backend</h3>
+            <p>
+              A backend would introduce sessions, credentials, and a server that
+              sees plaintext — three large topics that would compete with the
+              actual subject of the project. By staying static, CloudBox keeps
+              the focus on client-side transformation and origin access control.
+            </p>
+          </section>
+
+          <section class="doc-section" id="requirements">
+            <h2>07 · Hardware and software requirements</h2>
+            <h3>Hardware</h3>
+            <ul>
+              <li>
+                A computer or phone with enough free memory for browser-based
+                file processing; large files need substantially more memory than
+                their source size.
+              </li>
+              <li>
+                Internet access is needed only for hosted pages or configured
+                CloudFront downloads.
+              </li>
+            </ul>
+            <h3>Runtime software</h3>
+            <ul>
+              <li>A modern browser with JavaScript and Web Crypto enabled.</li>
+              <li>
+                A secure context such as HTTPS or localhost for cryptographic
+                APIs.
+              </li>
+              <li>
+                Local file access granted by the user through a file picker.
+              </li>
+            </ul>
+            <h3>Build software</h3>
+            <p>
+              Node.js and pnpm are needed only to develop or build the static
+              pages.
+            </p>
+            <div class="table-wrap">
+              <table class="doc-table">
+                <caption>
+                  Requirement matrix
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Requirement</th>
+                    <th scope="col">Needed for</th>
+                    <th scope="col">Typical value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Browser</td>
+                    <td>Viewing pages, running the demo</td>
+                    <td>Current Chrome, Edge, Firefox, or Safari</td>
+                  </tr>
+                  <tr>
+                    <td>Secure context</td>
+                    <td>
+                      <code class="mono">crypto.subtle</code> availability
+                    </td>
+                    <td>HTTPS or <code class="mono">localhost</code></td>
+                  </tr>
+                  <tr>
+                    <td>Free memory</td>
+                    <td>Holding plaintext, ciphertext, and package</td>
+                    <td>Several times the source file size</td>
+                  </tr>
+                  <tr>
+                    <td>Node.js</td>
+                    <td>Dev server and build only</td>
+                    <td>Current LTS release</td>
+                  </tr>
+                  <tr>
+                    <td>pnpm</td>
+                    <td>Workspace filtering and scripts</td>
+                    <td>Version used by the workspace</td>
+                  </tr>
+                  <tr>
+                    <td>Network</td>
+                    <td>Hosted pages, CDN downloads</td>
+                    <td>Any HTTPS-capable connection</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="doc-note">
+              <span class="note-label">Memory reality check</span>
+              <p>
+                A browser demo typically holds the original file, the working
+                block, the ciphertext block, and the serialized package in
+                memory at once. A 200 MB file can therefore require well over
+                half a gigabyte of transient allocations. Prefer smaller files
+                when demonstrating the flow.
+              </p>
+            </div>
+          </section>
+
+          <section class="doc-section" id="structure">
+            <h2>08 · Project structure</h2>
+            <pre
+              class="code-block"
+              id="project-structure"
+            ><button class="copy-button" type="button" data-copy="project-structure" aria-label="Copy project structure">Copy</button>cloudbox/
 ├── index.html
 ├── architecture.html
 ├── documentation.html
@@ -31,16 +818,343 @@
 │   └── AWS_DEPLOYMENT.md
 └── tests/
     ├── security.test.mjs
-    └── site.test.mjs</pre><p>All page-to-page links and asset references are relative so the static output can be hosted from a bucket or a subpath without depending on a root-domain route fallback.</p></section>
-<section class="doc-section" id="local-setup"><h2>09 · Local setup</h2><p>From the workspace root in Replit, run the artifact workflow or use the command below. In Windows PowerShell, open the project workspace folder first and run the same pnpm command. To deploy the static site, build it and upload the contents of the output directory.</p><pre class="code-block" id="setup-commands"><button class="copy-button" type="button" data-copy="setup-commands" aria-label="Copy Replit run command">Copy</button># Replit or Windows PowerShell, from the workspace root
+    └── site.test.mjs</pre>
+            <p>
+              All page-to-page links and asset references are relative so the
+              static output can be hosted from a bucket or a subpath without
+              depending on a root-domain route fallback.
+            </p>
+            <div class="table-wrap">
+              <table class="doc-table">
+                <caption>
+                  File responsibilities
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Path</th>
+                    <th scope="col">Role</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code class="mono">index.html</code></td>
+                    <td>Overview and entry point for the project narrative</td>
+                  </tr>
+                  <tr>
+                    <td><code class="mono">architecture.html</code></td>
+                    <td>Component diagrams and the request/response story</td>
+                  </tr>
+                  <tr>
+                    <td><code class="mono">documentation.html</code></td>
+                    <td>This implementation guide</td>
+                  </tr>
+                  <tr>
+                    <td><code class="mono">security.html</code></td>
+                    <td>Cryptography lab and threat-model discussion</td>
+                  </tr>
+                  <tr>
+                    <td><code class="mono">testing.html</code></td>
+                    <td>Manual test ledger with expected results</td>
+                  </tr>
+                  <tr>
+                    <td><code class="mono">team.html</code></td>
+                    <td>Contributors and responsibilities</td>
+                  </tr>
+                  <tr>
+                    <td><code class="mono">css/style.css</code></td>
+                    <td>Theme tokens, layout, and responsive rules</td>
+                  </tr>
+                  <tr>
+                    <td><code class="mono">js/app.js</code></td>
+                    <td>
+                      Navigation, theme persistence, copy buttons, local notes
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code class="mono">js/diagrams.js</code></td>
+                    <td>Progressive enhancement for architecture figures</td>
+                  </tr>
+                  <tr>
+                    <td><code class="mono">js/security.js</code></td>
+                    <td>Browser cryptography demo wiring</td>
+                  </tr>
+                  <tr>
+                    <td><code class="mono">docs/</code></td>
+                    <td>Long-form report, test cases, and deployment notes</td>
+                  </tr>
+                  <tr>
+                    <td><code class="mono">tests/</code></td>
+                    <td>
+                      Automated checks for crypto helpers and site structure
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              Keeping documentation in Markdown under
+              <code class="mono">docs/</code> means the same material can be
+              read in a repository view and mirrored into the HTML pages, so the
+              site and the report do not drift apart silently.
+            </p>
+          </section>
+
+          <section class="doc-section" id="local-setup">
+            <h2>09 · Local setup</h2>
+            <p>
+              From the workspace root in Replit, run the artifact workflow or
+              use the command below. In Windows PowerShell, open the project
+              workspace folder first and run the same pnpm command. To deploy
+              the static site, build it and upload the contents of the output
+              directory.
+            </p>
+            <pre
+              class="code-block"
+              id="setup-commands"
+            ><button class="copy-button" type="button" data-copy="setup-commands" aria-label="Copy Replit run command">Copy</button># Replit or Windows PowerShell, from the workspace root
 pnpm --filter @workspace/cloudbox run dev
 
 # Build static files for S3 / CloudFront
 pnpm --filter @workspace/cloudbox run build
-# output: artifacts/cloudbox/dist/</pre><p>Web Crypto is restricted outside secure contexts in many browsers. Use HTTPS in Replit or localhost for local development rather than opening an HTML file directly from disk. No database setup is required.</p></section>
-<section class="doc-section" id="segmentation"><h2>10 · Segmentation</h2><p>The source file is treated as a byte sequence and split into ordered ranges. A block size of 1 MiB is a practical educational default, not a universally optimal setting. The final block may be smaller than the configured size.</p><p>For a file of size <code class="mono">S</code> bytes and block size <code class="mono">B</code>, estimated block count is <code class="mono">ceil(S / B)</code>. Empty files need explicit format handling.</p></section>
-<section class="doc-section" id="cryptography"><h2>11 · Cryptography</h2><p>CloudBox uses an extractable 256-bit AES key for the demonstration, with AES-GCM and a 128-bit authentication tag. It generates a fresh random 12-byte IV for each block. AES-GCM combines encryption with an authentication tag that detects ciphertext changes; a robust design must never reuse an IV with the same key and must reject any block that fails authentication.</p><p>Cryptographic APIs should use the browser's Web Crypto implementation rather than custom algorithms. This educational prototype does not claim independent cryptographic review.</p></section>
-<section class="doc-section" id="package-format"><h2>12 · Package format</h2><p>The versioned package records the original file name and type, file size, block size, count, and indexed chunks. Each chunk carries a Base64 IV and authenticated ciphertext. The raw key is kept out of the package and downloaded separately.</p><pre class="code-block" id="package-format-example"><button class="copy-button" type="button" data-copy="package-format-example" aria-label="Copy package format example">Copy</button>{
+# output: artifacts/cloudbox/dist/</pre>
+            <p>
+              Web Crypto is restricted outside secure contexts in many browsers.
+              Use HTTPS in Replit or localhost for local development rather than
+              opening an HTML file directly from disk. No database setup is
+              required.
+            </p>
+            <h3>Suggested walkthrough</h3>
+            <ol>
+              <li>Start the dev server and open the printed local URL.</li>
+              <li>Confirm the theme toggle persists after a page reload.</li>
+              <li>
+                Open the security lab and confirm the crypto controls are
+                enabled.
+              </li>
+              <li>
+                Select a small file, run the workflow, and inspect the package
+                output.
+              </li>
+              <li>
+                Reconstruct the file and compare its size and checksum with the
+                original.
+              </li>
+              <li>
+                Resize the window or open dev tools to verify the responsive
+                navigation.
+              </li>
+            </ol>
+            <h3>Common setup problems</h3>
+            <ul>
+              <li>
+                <strong>Opening the HTML file directly from disk:</strong> the
+                page loads, but <code class="mono">crypto.subtle</code> may be
+                unavailable. Use the dev server instead.
+              </li>
+              <li>
+                <strong>Running pnpm from the wrong folder:</strong> the
+                workspace filter must be resolved from the workspace root.
+              </li>
+              <li>
+                <strong>Stale assets after a build:</strong> rebuild and hard
+                refresh, or clear the CDN cache in a hosted environment.
+              </li>
+              <li>
+                <strong>Relative paths when hosting in a subpath:</strong> keep
+                the built folder intact; do not flatten
+                <code class="mono">css/</code> and
+                <code class="mono">js/</code>.
+              </li>
+            </ul>
+          </section>
+
+          <section class="doc-section" id="segmentation">
+            <h2>10 · Segmentation</h2>
+            <p>
+              The source file is treated as a byte sequence and split into
+              ordered ranges. A block size of 1 MiB is a practical educational
+              default, not a universally optimal setting. The final block may be
+              smaller than the configured size.
+            </p>
+            <p>
+              For a file of size <code class="mono">S</code> bytes and block
+              size <code class="mono">B</code>, estimated block count is
+              <code class="mono">ceil(S / B)</code>. Empty files need explicit
+              format handling.
+            </p>
+            <div class="table-wrap">
+              <table class="doc-table">
+                <caption>
+                  Worked examples
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">File size</th>
+                    <th scope="col">Block size</th>
+                    <th scope="col">Blocks</th>
+                    <th scope="col">Final block</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1 KiB</td>
+                    <td>1 MiB</td>
+                    <td>1</td>
+                    <td>1 KiB</td>
+                  </tr>
+                  <tr>
+                    <td>5 MiB</td>
+                    <td>1 MiB</td>
+                    <td>5</td>
+                    <td>1 MiB (full)</td>
+                  </tr>
+                  <tr>
+                    <td>5 MiB + 1 byte</td>
+                    <td>1 MiB</td>
+                    <td>6</td>
+                    <td>1 byte</td>
+                  </tr>
+                  <tr>
+                    <td>0 bytes</td>
+                    <td>1 MiB</td>
+                    <td>0 or 1</td>
+                    <td>Requires explicit rule</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <h3>Choosing a block size</h3>
+            <p>
+              Block size is a trade-off between per-block overhead and peak
+              memory. Smaller blocks mean more IVs, more Base64 strings, and a
+              larger JSON envelope, but each individual operation stays small.
+              Larger blocks reduce metadata overhead but require bigger
+              contiguous allocations and produce coarser progress reporting.
+            </p>
+            <ul>
+              <li>
+                <strong>Smaller blocks (e.g. 64–256 KiB):</strong> smoother
+                progress, lower peak memory per step, more metadata.
+              </li>
+              <li>
+                <strong>1 MiB:</strong> a readable default for demos; easy to
+                reason about and still small enough for phones.
+              </li>
+              <li>
+                <strong>Larger blocks (e.g. 8 MiB):</strong> fewer chunks, but
+                higher memory pressure and longer per-block stalls.
+              </li>
+            </ul>
+            <div class="doc-note">
+              <span class="note-label">Determinism note</span>
+              <p>
+                Segmentation is deterministic given a size and block size, but
+                encryption is not: fresh random IVs mean the same file produces
+                a different package each time. Do not use package bytes as a
+                content hash.
+              </p>
+            </div>
+          </section>
+
+          <section class="doc-section" id="cryptography">
+            <h2>11 · Cryptography</h2>
+            <p>
+              CloudBox uses an extractable 256-bit AES key for the
+              demonstration, with AES-GCM and a 128-bit authentication tag. It
+              generates a fresh random 12-byte IV for each block. AES-GCM
+              combines encryption with an authentication tag that detects
+              ciphertext changes; a robust design must never reuse an IV with
+              the same key and must reject any block that fails authentication.
+            </p>
+            <p>
+              Cryptographic APIs should use the browser's Web Crypto
+              implementation rather than custom algorithms. This educational
+              prototype does not claim independent cryptographic review.
+            </p>
+            <h3>The three inputs that matter</h3>
+            <div class="doc-grid">
+              <div class="doc-card">
+                <h3>Key</h3>
+                <p>
+                  256 bits of AES key material. Held in memory for the demo and
+                  downloaded separately from the package — never bundled with
+                  it.
+                </p>
+              </div>
+              <div class="doc-card">
+                <h3>IV / nonce</h3>
+                <p>
+                  12 random bytes per block. The pair (key, IV) must never
+                  repeat. Random generation makes collisions negligible at demo
+                  scale.
+                </p>
+              </div>
+              <div class="doc-card">
+                <h3>Authentication tag</h3>
+                <p>
+                  128 bits appended to each ciphertext. Any modification to the
+                  block causes decryption to fail loudly rather than silently
+                  produce garbage.
+                </p>
+              </div>
+            </div>
+            <h3>Rules the demo follows</h3>
+            <ul>
+              <li>Use Web Crypto; never implement AES or GCM by hand.</li>
+              <li>
+                Generate a new IV for every block; never derive it from the
+                index alone.
+              </li>
+              <li>
+                Store the IV alongside the block, not as a global constant.
+              </li>
+              <li>
+                Treat authentication failure as a hard stop, not a warning.
+              </li>
+              <li>
+                Keep the key out of URLs, logs, localStorage, and repositories.
+              </li>
+            </ul>
+            <h3>Rules a production system would still need</h3>
+            <ul>
+              <li>
+                Key wrapping, rotation, revocation, and recovery procedures.
+              </li>
+              <li>Non-extractable keys where the workflow allows it.</li>
+              <li>
+                Streaming encryption so plaintext never fully resides in memory.
+              </li>
+              <li>
+                Interoperable test vectors and cross-implementation
+                verification.
+              </li>
+              <li>
+                Independent review of the package format and its metadata.
+              </li>
+            </ul>
+            <div class="doc-note">
+              <span class="note-label">Terminology</span>
+              <p>
+                "Extractable" means the browser will hand the raw key bytes back
+                to JavaScript. That is convenient for a demo that must download
+                a key file, and unsuitable for real protection against a
+                compromised page.
+              </p>
+            </div>
+          </section>
+
+          <section class="doc-section" id="package-format">
+            <h2>12 · Package format</h2>
+            <p>
+              The versioned package records the original file name and type,
+              file size, block size, count, and indexed chunks. Each chunk
+              carries a Base64 IV and authenticated ciphertext. The raw key is
+              kept out of the package and downloaded separately.
+            </p>
+            <pre
+              class="code-block"
+              id="package-format-example"
+            ><button class="copy-button" type="button" data-copy="package-format-example" aria-label="Copy package format example">Copy</button>{
   "format": "cloudbox-encrypted-package",
   "version": 1,
   "algorithm": "AES-256-GCM",
@@ -52,19 +1166,1005 @@ pnpm --filter @workspace/cloudbox run build
   "chunks": [
     { "index": 0, "iv": "Base64-encoded 12-byte IV", "ciphertext": "Base64-encoded ciphertext and GCM tag" }
   ]
-}</pre><p>Validate package sizes and schema before allocating memory. Do not trust a supplied filename as a filesystem path. The example values and payload strings are illustrative, not an actual encrypted package.</p></section>
-<section class="doc-section" id="reconstruction"><h2>13 · Reconstruction</h2><p>Read blocks in their defined order, authenticate and decrypt each with its corresponding nonce and key, then concatenate plaintext bytes. Any authentication failure should abort the operation and report an error; partial output must not be presented as a valid reconstruction.</p></section>
-<section class="doc-section" id="s3"><h2>14 · Private S3</h2><p>An S3 bucket used as a CloudFront origin should have public access blocked. Bucket policy should grant only the intended distribution origin identity access, with least-privilege actions and resources. This project does not provision or configure an actual bucket.</p></section>
-<section class="doc-section" id="cloudfront"><h2>15 · CloudFront</h2><p>CloudFront distributes static objects through edge locations and can cache content near viewers. Cache behavior, object invalidation, TLS configuration, and origin access policy must be selected and tested for the deployment. No real distribution domain is supplied here.</p></section>
-<section class="doc-section" id="oac"><h2>16 · Origin Access Control</h2><p>OAC lets CloudFront sign requests to an S3 origin. The origin bucket policy must refer to the correct distribution and service principal. Misconfigured policies may produce access denied responses or expose objects more broadly than intended.</p></section>
-<section class="doc-section" id="https"><h2>17 · HTTPS</h2><p>Serve the website and object downloads over HTTPS. TLS protects data in transit between endpoints; it does not provide file-level encryption after a trusted endpoint has received plaintext. Web Crypto is available only in secure browser contexts, typically HTTPS or localhost.</p></section>
-<section class="doc-section" id="upload"><h2>18 · Upload path</h2><p>In the educational flow, a user selects a local file and the client prepares encrypted output. There is no authenticated upload API in this prototype. A production upload design would need identity, authorization, safe key handling, request limits, logging, abuse controls, and a well-defined destination policy. Do not put permanent AWS credentials in frontend code.</p></section>
-<section class="doc-section" id="download"><h2>19 · Download path</h2><p>A configured CloudFront URL can deliver an encrypted package over HTTPS. The recipient must separately possess the correct key and package. The client then validates metadata, authenticates and decrypts each block, and reconstructs the file locally.</p></section>
-<section class="doc-section" id="troubleshooting"><h2>20 · Troubleshooting</h2><ul><li><strong>Crypto API unavailable:</strong> use localhost or a deployed HTTPS origin.</li><li><strong>Authentication tag error:</strong> check key, nonce, package integrity, and block association; do not bypass verification.</li><li><strong>Origin access denied:</strong> review distribution origin, OAC association, and S3 bucket policy.</li><li><strong>Browser memory pressure:</strong> use smaller blocks and avoid large concurrent operations.</li><li><strong>Download fails:</strong> verify URL, HTTPS, CORS behavior, and CloudFront cache configuration.</li></ul></section>
-<section class="doc-section" id="security-notes"><h2>21 · Security notes</h2><p>Keep the encryption key separate from the encrypted package and out of public repositories, public websites, and query strings. Treat browser memory, shared devices, extensions, and endpoint compromise as part of the threat model. Never claim that HTTPS alone is end-to-end encryption.</p></section>
-<section class="doc-section" id="limitations"><h2>22 · Limitations</h2><ul><li>No user authentication, access-control service, or upload API.</li><li>No managed key recovery, revocation, rotation, or sharing protocol.</li><li>Browser memory and available storage constrain file size.</li><li>No automated AWS provisioning or live AWS configuration is bundled.</li><li>Educational prototype only; no penetration test or formal audit is claimed.</li></ul></section>
-<section class="doc-section" id="future-work"><h2>23 · Future work</h2><p>Potential work includes a reviewed package schema, streaming encryption and decryption, interoperable test vectors, a threat-model review, signed upload authorization, identity integration, retention policy, cloud deployment automation, and a reproducible security test suite.</p></section>
-<section class="doc-section" id="conclusion"><h2>24 · Conclusion</h2><p>CloudBox presents a useful conceptual chain: segmentation makes file processing manageable, authenticated encryption protects content, private object storage limits origin exposure, and CloudFront accelerates delivery. Secure implementation depends on the details at each boundary and on being honest about what is not deployed.</p></section>
-<section class="doc-section" id="references"><h2>25 · References</h2><ul><li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API" target="_blank" rel="noopener noreferrer">MDN Web Crypto API documentation</a></li><li><a href="https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt" target="_blank" rel="noopener noreferrer">MDN SubtleCrypto.encrypt reference</a></li><li><a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html" target="_blank" rel="noopener noreferrer">Amazon CloudFront: restricting access to an Amazon S3 origin</a></li><li><a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html" target="_blank" rel="noopener noreferrer">Amazon S3 Block Public Access</a></li><li><a href="https://developer.mozilla.org/en-US/docs/Web/Security/Transport_Layer_Security" target="_blank" rel="noopener noreferrer">MDN Transport Layer Security</a></li></ul><p>Consult current vendor and standards documentation before deploying; cloud configuration and browser support evolve.</p></section>
-</article></div></main>
-<footer class="footer"><div class="container footer-inner"><div><div class="footer-brand">CloudBox <span class="muted">/ secure file lab</span></div><p>Documentation is educational and does not replace a deployment review or security audit.</p></div><nav class="footer-links" aria-label="Footer navigation"><a href="./index.html">Overview</a><a href="./architecture.html">Architecture</a><a href="./security.html">Security lab</a><a href="./team.html">Team</a><a href="./testing.html">Testing</a></nav><span class="inline-meta">© <span data-year></span> CloudBox</span></div></footer><div class="toast-region" data-toast-region aria-live="polite"></div><script type="module" src="./js/app.js"></script></body></html>
+}</pre>
+            <p>
+              Validate package sizes and schema before allocating memory. Do not
+              trust a supplied filename as a filesystem path. The example values
+              and payload strings are illustrative, not an actual encrypted
+              package.
+            </p>
+            <div class="table-wrap">
+              <table class="doc-table">
+                <caption>
+                  Field reference
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Field</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Validation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code class="mono">format</code></td>
+                    <td>string</td>
+                    <td>Must equal the documented identifier</td>
+                  </tr>
+                  <tr>
+                    <td><code class="mono">version</code></td>
+                    <td>integer</td>
+                    <td>Reject unknown major versions</td>
+                  </tr>
+                  <tr>
+                    <td><code class="mono">algorithm</code></td>
+                    <td>string</td>
+                    <td>Must match the supported cipher suite</td>
+                  </tr>
+                  <tr>
+                    <td><code class="mono">originalName</code></td>
+                    <td>string</td>
+                    <td>Display only; sanitize before any file write</td>
+                  </tr>
+                  <tr>
+                    <td><code class="mono">originalType</code></td>
+                    <td>string</td>
+                    <td>Advisory MIME type; do not execute or auto-render</td>
+                  </tr>
+                  <tr>
+                    <td><code class="mono">originalSize</code></td>
+                    <td>integer</td>
+                    <td>Cross-check against decrypted byte total</td>
+                  </tr>
+                  <tr>
+                    <td><code class="mono">blockSize</code></td>
+                    <td>integer</td>
+                    <td>Positive, within an allowed range</td>
+                  </tr>
+                  <tr>
+                    <td><code class="mono">blockCount</code></td>
+                    <td>integer</td>
+                    <td>Must equal <code class="mono">chunks.length</code></td>
+                  </tr>
+                  <tr>
+                    <td><code class="mono">chunks[].index</code></td>
+                    <td>integer</td>
+                    <td>Contiguous, unique, ascending from zero</td>
+                  </tr>
+                  <tr>
+                    <td><code class="mono">chunks[].iv</code></td>
+                    <td>Base64</td>
+                    <td>Decodes to exactly 12 bytes</td>
+                  </tr>
+                  <tr>
+                    <td><code class="mono">chunks[].ciphertext</code></td>
+                    <td>Base64</td>
+                    <td>Longer than the 16-byte tag; decodes cleanly</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <h3>Why metadata is authenticated, not trusted</h3>
+            <p>
+              The GCM tag protects each block's ciphertext, but the envelope
+              fields sit outside those tags. A recipient should therefore
+              cross-check declared values against observed ones after
+              decryption: the sum of plaintext block lengths must equal
+              <code class="mono">originalSize</code>, and the number of
+              decrypted blocks must equal <code class="mono">blockCount</code>.
+              Where stronger guarantees are needed, bind metadata into the
+              authenticated data of each block.
+            </p>
+            <div class="doc-note">
+              <span class="note-label">Hostile input</span>
+              <p>
+                A package is untrusted input. Validate lengths before decoding
+                Base64, cap the total allocation, and never use
+                <code class="mono">originalName</code> as a path component when
+                writing files server-side.
+              </p>
+            </div>
+          </section>
+
+          <section class="doc-section" id="reconstruction">
+            <h2>13 · Reconstruction</h2>
+            <p>
+              Read blocks in their defined order, authenticate and decrypt each
+              with its corresponding nonce and key, then concatenate plaintext
+              bytes. Any authentication failure should abort the operation and
+              report an error; partial output must not be presented as a valid
+              reconstruction.
+            </p>
+            <ol>
+              <li>
+                Parse the package and validate the schema and size limits.
+              </li>
+              <li>
+                Sort chunks by <code class="mono">index</code> and verify they
+                are contiguous.
+              </li>
+              <li>Import the key and decode each IV to exactly 12 bytes.</li>
+              <li>
+                Decrypt each block with AES-GCM; the API verifies the tag before
+                returning plaintext.
+              </li>
+              <li>Append the plaintext to an output buffer in order.</li>
+              <li>
+                Compare the total length with
+                <code class="mono">originalSize</code>
+                before offering the file for download.
+              </li>
+            </ol>
+            <h3>Failure behavior</h3>
+            <ul>
+              <li>
+                <strong>Wrong key:</strong> the first block fails
+                authentication. Report a key mismatch; do not retry silently
+                with other keys.
+              </li>
+              <li>
+                <strong>Tampered ciphertext:</strong> the affected block fails;
+                the whole reconstruction is rejected.
+              </li>
+              <li>
+                <strong>Missing or duplicated index:</strong> structural
+                rejection before any decryption is attempted.
+              </li>
+              <li>
+                <strong>Truncated package:</strong> JSON parse or length
+                validation fails; nothing is written.
+              </li>
+            </ul>
+            <p>
+              The strictness is the point. An authenticated-encryption scheme
+              that is allowed to "skip a bad block" is no longer authenticated;
+              it has quietly become an unauthenticated one with extra steps.
+            </p>
+          </section>
+
+          <section class="doc-section" id="s3">
+            <h2>14 · Private S3</h2>
+            <p>
+              An S3 bucket used as a CloudFront origin should have public access
+              blocked. Bucket policy should grant only the intended distribution
+              origin identity access, with least-privilege actions and
+              resources. This project does not provision or configure an actual
+              bucket.
+            </p>
+            <h3>Baseline expectations</h3>
+            <ul>
+              <li>
+                Block Public Access enabled at the account and bucket level.
+              </li>
+              <li>
+                No public ACLs; ACLs disabled in favor of bucket policies where
+                possible.
+              </li>
+              <li>
+                Only <code class="mono">s3:GetObject</code> granted to the
+                distribution for read-only delivery.
+              </li>
+              <li>
+                Bucket versioning considered for recovery from accidental
+                overwrite.
+              </li>
+              <li>
+                Access logging or CloudTrail data events enabled where
+                appropriate.
+              </li>
+              <li>
+                Default encryption at rest enabled as defense in depth — not as
+                a substitute for client-side encryption.
+              </li>
+            </ul>
+            <p>
+              A conceptual policy shape is shown below. It is illustrative only
+              and must be adapted to the real distribution ARN and account.
+            </p>
+            <pre
+              class="code-block"
+              id="bucket-policy-example"
+            ><button class="copy-button" type="button" data-copy="bucket-policy-example" aria-label="Copy illustrative bucket policy">Copy</button>{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowCloudFrontServicePrincipalReadOnly",
+      "Effect": "Allow",
+      "Principal": { "Service": "cloudfront.amazonaws.com" },
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::example-cloudbox-bucket/*",
+      "Condition": {
+        "StringEquals": {
+          "AWS:SourceArn": "arn:aws:cloudfront::111122223333:distribution/EXAMPLEID"
+        }
+      }
+    }
+  ]
+}</pre>
+            <div class="doc-note">
+              <span class="note-label">Not provisioned</span>
+              <p>
+                CloudBox ships no bucket, no policy, and no credentials. The
+                snippet exists to make the access model concrete, not to be
+                pasted blindly into an account.
+              </p>
+            </div>
+            <h3>Why public-read is the wrong shortcut</h3>
+            <p>
+              A public-read bucket makes the object reachable by anyone with the
+              URL. If the package is properly encrypted the plaintext may still
+              be protected, but you have lost the ability to revoke access,
+              invalidate links, and audit retrieval. Access control and
+              encryption are complementary, not interchangeable.
+            </p>
+          </section>
+
+          <section class="doc-section" id="cloudfront">
+            <h2>15 · CloudFront</h2>
+            <p>
+              CloudFront distributes static objects through edge locations and
+              can cache content near viewers. Cache behavior, object
+              invalidation, TLS configuration, and origin access policy must be
+              selected and tested for the deployment. No real distribution
+              domain is supplied here.
+            </p>
+            <div class="table-wrap">
+              <table class="doc-table">
+                <caption>
+                  Configuration topics to decide
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Topic</th>
+                    <th scope="col">What to decide</th>
+                    <th scope="col">Risk if skipped</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Cache behavior</td>
+                    <td>Path patterns, allowed methods, compression</td>
+                    <td>Stale HTML or unnecessary origin fetches</td>
+                  </tr>
+                  <tr>
+                    <td>TTLs</td>
+                    <td>Minimum, default, and maximum cache duration</td>
+                    <td>Outdated content or excessive invalidation cost</td>
+                  </tr>
+                  <tr>
+                    <td>Invalidation</td>
+                    <td>When and how to purge changed objects</td>
+                    <td>Users see the previous release</td>
+                  </tr>
+                  <tr>
+                    <td>TLS</td>
+                    <td>Minimum protocol version, certificate source</td>
+                    <td>Weak transport or browser warnings</td>
+                  </tr>
+                  <tr>
+                    <td>Origin access</td>
+                    <td>OAC association and signing behavior</td>
+                    <td>Access denied errors or an over-exposed origin</td>
+                  </tr>
+                  <tr>
+                    <td>Error responses</td>
+                    <td>Custom error pages for 403 and 404</td>
+                    <td>Confusing failures during debugging</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              For a documentation site, HTML should generally use short TTLs
+              while hashed static assets can be cached aggressively. Encrypted
+              packages behave like immutable content: because each run produces
+              a new ciphertext, a new key, and a new object name, long caching
+              is usually safe.
+            </p>
+            <h3>Edge caching is not authorization</h3>
+            <p>
+              A cached object can be served without contacting the origin, so
+              any decision that must be re-evaluated per request belongs at a
+              layer that actually runs per request — signed URLs, signed
+              cookies, or an authorizing compute layer. CloudBox does not
+              implement either; it documents the gap.
+            </p>
+          </section>
+
+          <section class="doc-section" id="oac">
+            <h2>16 · Origin Access Control</h2>
+            <p>
+              OAC lets CloudFront sign requests to an S3 origin. The origin
+              bucket policy must refer to the correct distribution and service
+              principal. Misconfigured policies may produce access denied
+              responses or expose objects more broadly than intended.
+            </p>
+            <h3>How the signed request works</h3>
+            <ol>
+              <li>A viewer requests an object from the distribution domain.</li>
+              <li>CloudFront checks its cache for a valid entry.</li>
+              <li>
+                On a miss, CloudFront signs the origin request using its origin
+                access control configuration.
+              </li>
+              <li>
+                S3 evaluates the bucket policy, including the
+                <code class="mono">AWS:SourceArn</code> condition, and returns
+                the object if the request matches.
+              </li>
+              <li>CloudFront caches and returns the response to the viewer.</li>
+            </ol>
+            <pre
+              class="code-block"
+              id="oac-policy-example"
+            ><button class="copy-button" type="button" data-copy="oac-policy-example" aria-label="Copy OAC checklist">Copy</button># OAC configuration checklist (conceptual)
+1. Create an Origin Access Control with "Sign requests" enabled.
+2. Attach the OAC to the S3 origin in the distribution.
+3. Deny direct public access to the bucket.
+4. Grant s3:GetObject only to the CloudFront service principal.
+5. Restrict the grant with AWS:SourceArn = this distribution.
+6. Verify with: distribution URL returns 200, bucket URL returns 403.</pre>
+            <h3>Common misconfigurations</h3>
+            <ul>
+              <li>
+                <strong>Policy references the wrong distribution ARN:</strong>
+                every origin request returns 403 while the bucket looks correct.
+              </li>
+              <li>
+                <strong>Principal is a wildcard:</strong> the origin is
+                effectively public through any CloudFront distribution.
+              </li>
+              <li>
+                <strong>Both legacy OAI and OAC attached:</strong> confusing
+                diagnostics and inconsistent signing behavior.
+              </li>
+              <li>
+                <strong>Missing <code class="mono">s3:GetObject</code>:</strong>
+                policy looks restrictive but does not allow the read it must
+                allow.
+              </li>
+              <li>
+                <strong>Block Public Access disabled "to make it work":</strong>
+                the real problem was the policy condition, not public access.
+              </li>
+            </ul>
+            <div class="doc-note">
+              <span class="note-label">Verification habit</span>
+              <p>
+                After any origin change, test both paths: the distribution URL
+                should succeed, and a direct request to the bucket endpoint
+                should fail. If both succeed, the origin is not private.
+              </p>
+            </div>
+          </section>
+
+          <section class="doc-section" id="https">
+            <h2>17 · HTTPS</h2>
+            <p>
+              Serve the website and object downloads over HTTPS. TLS protects
+              data in transit between endpoints; it does not provide file-level
+              encryption after a trusted endpoint has received plaintext. Web
+              Crypto is available only in secure browser contexts, typically
+              HTTPS or localhost.
+            </p>
+            <ul>
+              <li>
+                <strong>Transport protection:</strong> encrypts the channel
+                between viewer and edge, and between edge and origin where
+                supported.
+              </li>
+              <li>
+                <strong>Integrity in transit:</strong> detects modification
+                during transfer, complementing the per-block GCM tag.
+              </li>
+              <li>
+                <strong>Secure-context gate:</strong> without HTTPS (or
+                localhost), <code class="mono">crypto.subtle</code> is typically
+                unavailable.
+              </li>
+            </ul>
+            <h3>Practical configuration notes</h3>
+            <ul>
+              <li>Redirect HTTP to HTTPS rather than serving both.</li>
+              <li>
+                Disable obsolete protocol versions; prefer TLS 1.2 and above.
+              </li>
+              <li>Consider HSTS once the domain is fully HTTPS-only.</li>
+              <li>
+                Ensure all subresources are HTTPS to avoid mixed-content
+                blocking.
+              </li>
+              <li>
+                Do not place keys or sensitive tokens in query strings; URLs
+                leak through logs, referrers, and caches.
+              </li>
+            </ul>
+            <div class="doc-note">
+              <span class="note-label">Frequent misconception</span>
+              <p>
+                End-to-end encryption means the service in the middle cannot
+                read the content. HTTPS to a service that decrypts and stores
+                plaintext is not end-to-end encryption — it is encrypted
+                transport plus whatever the service does next.
+              </p>
+            </div>
+          </section>
+
+          <section class="doc-section" id="upload">
+            <h2>18 · Upload path</h2>
+            <p>
+              In the educational flow, a user selects a local file and the
+              client prepares encrypted output. There is no authenticated upload
+              API in this prototype. A production upload design would need
+              identity, authorization, safe key handling, request limits,
+              logging, abuse controls, and a well-defined destination policy. Do
+              not put permanent AWS credentials in frontend code.
+            </p>
+            <h3>Demonstrated flow</h3>
+            <ol>
+              <li>The user chooses a file with the file picker.</li>
+              <li>
+                The client reads it in blocks and computes the block plan.
+              </li>
+              <li>Each block is encrypted with a fresh IV.</li>
+              <li>A versioned JSON package is assembled in memory.</li>
+              <li>
+                The package is offered as a download; the key is offered
+                separately.
+              </li>
+            </ol>
+            <h3>What a production upload would add</h3>
+            <div class="doc-grid">
+              <div class="doc-card">
+                <h3>Identity</h3>
+                <p>
+                  An authenticated principal so that uploads can be attributed,
+                  limited, and revoked.
+                </p>
+              </div>
+              <div class="doc-card">
+                <h3>Authorization</h3>
+                <p>
+                  Short-lived presigned URLs or a scoped upload endpoint instead
+                  of long-lived credentials in the browser.
+                </p>
+              </div>
+              <div class="doc-card">
+                <h3>Abuse controls</h3>
+                <p>
+                  Size caps, rate limits, content-type checks, and monitoring
+                  for anomalous volume.
+                </p>
+              </div>
+              <div class="doc-card">
+                <h3>Key handling</h3>
+                <p>
+                  A documented story for wrapping, storing, and recovering keys
+                  that never travels with the package.
+                </p>
+              </div>
+            </div>
+            <p>
+              The most common mistake in this area is embedding permanent AWS
+              access keys in frontend JavaScript. Anything shipped to a browser
+              is public, regardless of minification or obfuscation. Presigned
+              URLs exist precisely to avoid that.
+            </p>
+          </section>
+
+          <section class="doc-section" id="download">
+            <h2>19 · Download path</h2>
+            <p>
+              A configured CloudFront URL can deliver an encrypted package over
+              HTTPS. The recipient must separately possess the correct key and
+              package. The client then validates metadata, authenticates and
+              decrypts each block, and reconstructs the file locally.
+            </p>
+            <ol>
+              <li>
+                Request the package from the distribution domain over HTTPS.
+              </li>
+              <li>Receive the cached or origin-served JSON envelope.</li>
+              <li>Validate the schema, version, and declared sizes.</li>
+              <li>Obtain the key through a separate trusted channel.</li>
+              <li>Decrypt and authenticate every block in index order.</li>
+              <li>
+                Concatenate plaintext, verify total length, and offer the file.
+              </li>
+            </ol>
+            <div class="table-wrap">
+              <table class="doc-table">
+                <caption>
+                  Failure modes on the download path
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Symptom</th>
+                    <th scope="col">Likely cause</th>
+                    <th scope="col">Next check</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>403 from the distribution</td>
+                    <td>Origin access misconfiguration</td>
+                    <td>OAC association and bucket policy condition</td>
+                  </tr>
+                  <tr>
+                    <td>Older package than expected</td>
+                    <td>Edge cache still serving previous object</td>
+                    <td>TTL settings or an explicit invalidation</td>
+                  </tr>
+                  <tr>
+                    <td>CORS error in the browser</td>
+                    <td>Missing or narrow CORS configuration</td>
+                    <td>Allowed origins, methods, and headers</td>
+                  </tr>
+                  <tr>
+                    <td>Authentication tag mismatch</td>
+                    <td>Wrong key or altered ciphertext</td>
+                    <td>Key pairing and package integrity</td>
+                  </tr>
+                  <tr>
+                    <td>Partial or corrupt output</td>
+                    <td>Missing chunk or bad index order</td>
+                    <td>Chunk count and index continuity</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              Because the package is static, the download path has no
+              server-side authorization step in this prototype. That is
+              acceptable for a demo of ciphertext delivery and unacceptable for
+              anything that requires per-user access decisions.
+            </p>
+          </section>
+
+          <section class="doc-section" id="troubleshooting">
+            <h2>20 · Troubleshooting</h2>
+            <ul>
+              <li>
+                <strong>Crypto API unavailable:</strong> use localhost or a
+                deployed HTTPS origin.
+              </li>
+              <li>
+                <strong>Authentication tag error:</strong> check key, nonce,
+                package integrity, and block association; do not bypass
+                verification.
+              </li>
+              <li>
+                <strong>Origin access denied:</strong> review distribution
+                origin, OAC association, and S3 bucket policy.
+              </li>
+              <li>
+                <strong>Browser memory pressure:</strong> use smaller blocks and
+                avoid large concurrent operations.
+              </li>
+              <li>
+                <strong>Download fails:</strong> verify URL, HTTPS, CORS
+                behavior, and CloudFront cache configuration.
+              </li>
+            </ul>
+            <div class="table-wrap">
+              <table class="doc-table">
+                <caption>
+                  Extended troubleshooting map
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Observation</th>
+                    <th scope="col">Where to look</th>
+                    <th scope="col">Safe fix</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Theme does not persist</td>
+                    <td>Local storage access, script errors</td>
+                    <td>
+                      Re-enable storage or check console for blocked scripts
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Mobile menu does not open</td>
+                    <td>Module load failure, missing data attributes</td>
+                    <td>
+                      Confirm <code class="mono">app.js</code> loads without
+                      errors
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Copy buttons do nothing</td>
+                    <td>Clipboard permissions in the browser</td>
+                    <td>Grant permission or copy manually</td>
+                  </tr>
+                  <tr>
+                    <td>Package too large to open</td>
+                    <td>File size versus available memory</td>
+                    <td>Reduce file size or block size</td>
+                  </tr>
+                  <tr>
+                    <td>Slow processing on mobile</td>
+                    <td>Per-block crypto cost</td>
+                    <td>Smaller blocks and one operation at a time</td>
+                  </tr>
+                  <tr>
+                    <td>Inconsistent results after redeploy</td>
+                    <td>CDN caching of HTML</td>
+                    <td>Invalidate HTML paths or shorten TTLs</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="doc-note">
+              <span class="note-label">Do not "fix" crypto errors</span>
+              <p>
+                Suppressing an authentication failure by falling back to
+                unauthenticated decryption or by ignoring failed blocks converts
+                a detectable problem into silent data corruption. Fix the key or
+                the package instead.
+              </p>
+            </div>
+          </section>
+
+          <section class="doc-section" id="security-notes">
+            <h2>21 · Security notes</h2>
+            <p>
+              Keep the encryption key separate from the encrypted package and
+              out of public repositories, public websites, and query strings.
+              Treat browser memory, shared devices, extensions, and endpoint
+              compromise as part of the threat model. Never claim that HTTPS
+              alone is end-to-end encryption.
+            </p>
+            <h3>Threat model at a glance</h3>
+            <div class="table-wrap">
+              <table class="doc-table">
+                <caption>
+                  Selected threats and prototype coverage
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Threat</th>
+                    <th scope="col">Covered?</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Object store operator reads files</td>
+                    <td>Partially</td>
+                    <td>
+                      Only ciphertext is stored, but key management is out of
+                      scope
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Tampering with stored ciphertext</td>
+                    <td>Yes</td>
+                    <td>GCM tag fails authentication per block</td>
+                  </tr>
+                  <tr>
+                    <td>Interception in transit</td>
+                    <td>Yes</td>
+                    <td>HTTPS required for hosted delivery</td>
+                  </tr>
+                  <tr>
+                    <td>Compromised browser or extension</td>
+                    <td>No</td>
+                    <td>
+                      Endpoint holds plaintext and key during the operation
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Malicious package from an untrusted source</td>
+                    <td>Partially</td>
+                    <td>
+                      Schema validation limits damage; DoS via size is still
+                      possible
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Credential leakage in frontend code</td>
+                    <td>N/A</td>
+                    <td>No cloud credentials are present in the prototype</td>
+                  </tr>
+                  <tr>
+                    <td>Key loss by the user</td>
+                    <td>No</td>
+                    <td>No recovery or escrow mechanism exists</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <h3>Key handling do and do-not</h3>
+            <ul>
+              <li>
+                Do keep the key out of the package, the page source, and the
+                URL.
+              </li>
+              <li>
+                Do prefer non-extractable keys where the workflow permits.
+              </li>
+              <li>
+                Do deliver keys through a channel separate from the ciphertext.
+              </li>
+              <li>
+                Do not commit sample keys to a repository, even as placeholders.
+              </li>
+              <li>Do not log key material or decrypted metadata.</li>
+              <li>
+                Do not reuse an IV with the same key under any circumstance.
+              </li>
+            </ul>
+            <p>
+              Finally, be careful with language. Terms like "secure", "private",
+              and "encrypted" carry assumptions. The documentation uses them
+              narrowly: encrypted means transformed with AES-GCM; private means
+              not publicly retrievable; secure is avoided unless a specific
+              property is named.
+            </p>
+          </section>
+
+          <section class="doc-section" id="limitations">
+            <h2>22 · Limitations</h2>
+            <ul>
+              <li>
+                No user authentication, access-control service, or upload API.
+              </li>
+              <li>
+                No managed key recovery, revocation, rotation, or sharing
+                protocol.
+              </li>
+              <li>Browser memory and available storage constrain file size.</li>
+              <li>
+                No automated AWS provisioning or live AWS configuration is
+                bundled.
+              </li>
+              <li>
+                Educational prototype only; no penetration test or formal audit
+                is claimed.
+              </li>
+            </ul>
+            <h3>Consequences of each limitation</h3>
+            <div class="table-wrap">
+              <table class="doc-table">
+                <caption>
+                  Limitation → practical impact
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Limitation</th>
+                    <th scope="col">Practical impact</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>No identity layer</td>
+                    <td>
+                      Cannot attribute, revoke, or per-user authorize access
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>No upload API</td>
+                    <td>Packages are produced locally and moved manually</td>
+                  </tr>
+                  <tr>
+                    <td>No key management</td>
+                    <td>Losing the key means losing the file, permanently</td>
+                  </tr>
+                  <tr>
+                    <td>Whole-file-in-memory model</td>
+                    <td>
+                      Very large files fail or stall on constrained devices
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>No deployment automation</td>
+                    <td>
+                      Every cloud example is documentation, not infrastructure
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>No formal audit</td>
+                    <td>
+                      Nothing here should be treated as a compliance statement
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="doc-note">
+              <span class="note-label">Use it for teaching only</span>
+              <p>
+                Treat CloudBox as a way to build intuition about boundaries. Do
+                not store irreplaceable or sensitive data with it, and do not
+                cite it as evidence that a similar production design is secure.
+              </p>
+            </div>
+          </section>
+
+          <section class="doc-section" id="future-work">
+            <h2>23 · Future work</h2>
+            <p>
+              Potential work includes a reviewed package schema, streaming
+              encryption and decryption, interoperable test vectors, a
+              threat-model review, signed upload authorization, identity
+              integration, retention policy, cloud deployment automation, and a
+              reproducible security test suite.
+            </p>
+            <h3>Grouped roadmap</h3>
+            <div class="doc-grid">
+              <div class="doc-card">
+                <h3>Format &amp; crypto</h3>
+                <p>
+                  Freeze a versioned schema, add authenticated metadata, publish
+                  test vectors, and evaluate streaming AES-GCM with bounded
+                  memory.
+                </p>
+              </div>
+              <div class="doc-card">
+                <h3>Identity &amp; access</h3>
+                <p>
+                  Introduce a login flow, per-user authorization, and
+                  short-lived presigned upload/download URLs.
+                </p>
+              </div>
+              <div class="doc-card">
+                <h3>Operations</h3>
+                <p>
+                  Document key rotation and revocation, retention windows, and
+                  cost/usage monitoring for the distribution.
+                </p>
+              </div>
+              <div class="doc-card">
+                <h3>Assurance</h3>
+                <p>
+                  Grow the automated test suite, add cross-browser checks, and
+                  commission an independent review of the threat model.
+                </p>
+              </div>
+            </div>
+            <h3>Near-term, high-value items</h3>
+            <ol>
+              <li>
+                Write the package schema down as a versioned specification with
+                examples.
+              </li>
+              <li>
+                Add negative tests for tampered ciphertext and reordered chunks.
+              </li>
+              <li>
+                Replace in-memory assembly with streaming where the platform
+                allows.
+              </li>
+              <li>Add a clear recovery warning to the key download step.</li>
+              <li>
+                Document a deployment checklist that separates "described" from
+                "configured".
+              </li>
+            </ol>
+          </section>
+
+          <section class="doc-section" id="conclusion">
+            <h2>24 · Conclusion</h2>
+            <p>
+              CloudBox presents a useful conceptual chain: segmentation makes
+              file processing manageable, authenticated encryption protects
+              content, private object storage limits origin exposure, and
+              CloudFront accelerates delivery. Secure implementation depends on
+              the details at each boundary and on being honest about what is not
+              deployed.
+            </p>
+            <p>
+              If there is a single takeaway, it is that these mechanisms solve
+              different problems and fail in different ways. Segmentation is a
+              memory and granularity decision. AES-GCM is a confidentiality and
+              integrity decision. A private bucket with Origin Access Control is
+              an access decision. HTTPS is a transport decision. None of them
+              substitutes for another, and a design that treats them as
+              interchangeable will look secure while leaving an obvious gap.
+            </p>
+            <p>
+              The prototype is deliberately unfinished at the points where real
+              systems get hard: identity, key lifecycle, streaming, and
+              operational assurance. Naming those gaps is part of the
+              educational goal, and the recommended next step for anyone
+              extending this work is to close them one at a time, with tests and
+              a written rationale for each decision.
+            </p>
+          </section>
+
+          <section class="doc-section" id="references">
+            <h2>25 · References</h2>
+            <ul>
+              <li>
+                <a
+                  href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >MDN Web Crypto API documentation</a
+                >
+              </li>
+              <li>
+                <a
+                  href="https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >MDN SubtleCrypto.encrypt reference</a
+                >
+              </li>
+              <li>
+                <a
+                  href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >Amazon CloudFront: restricting access to an Amazon S3
+                  origin</a
+                >
+              </li>
+              <li>
+                <a
+                  href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >Amazon S3 Block Public Access</a
+                >
+              </li>
+              <li>
+                <a
+                  href="https://developer.mozilla.org/en-US/docs/Web/Security/Transport_Layer_Security"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >MDN Transport Layer Security</a
+                >
+              </li>
+              <li>
+                <a
+                  href="https://csrc.nist.gov/pubs/sp/800/38/d/final"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >NIST SP 800-38D: GCM and GMAC specification</a
+                >
+              </li>
+              <li>
+                <a
+                  href="https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >OWASP Cryptographic Storage Cheat Sheet</a
+                >
+              </li>
+            </ul>
+            <p>
+              Consult current vendor and standards documentation before
+              deploying; cloud configuration and browser support evolve.
+            </p>
+          </section>
+        </article>
+      </div>
+    </main>
+    <footer class="footer">
+      <div class="container footer-inner">
+        <div>
+          <div class="footer-brand">
+            CloudBox <span class="muted">/ secure file lab</span>
+          </div>
+          <p>
+            Documentation is educational and does not replace a deployment
+            review or security audit.
+          </p>
+        </div>
+        <nav class="footer-links" aria-label="Footer navigation">
+          <a href="./index.html">Overview</a
+          ><a href="./architecture.html">Architecture</a
+          ><a href="./security.html">Security lab</a
+          ><a href="./team.html">Team</a><a href="./testing.html">Testing</a>
+        </nav>
+        <span class="inline-meta">© <span data-year></span> CloudBox</span>
+      </div>
+    </footer>
+    <div class="toast-region" data-toast-region aria-live="polite"></div>
+    <script type="module" src="./js/app.js"></script>
+  </body>
+</html>
